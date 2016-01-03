@@ -1,0 +1,3 @@
+cluster.name: dev_cluster
+node.name: test_node
+path.home: target

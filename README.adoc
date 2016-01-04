@@ -1,0 +1,13 @@
+= Lambdamatic for Elasticsearch
+
+== Intro
+
+Lambdamatic for Elasticsearch is a library that provides a Reactive Streams implementation to manage data on Elasticsearch.
+
+== License
+
+Lambdamatic for Elasticsearch is made available under the terms of the Eclipse Public License v1.0 which accompanies this distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
+
+== Status
+
+Just a prototype for now.

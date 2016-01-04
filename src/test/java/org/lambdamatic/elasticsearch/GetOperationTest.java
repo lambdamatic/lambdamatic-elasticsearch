@@ -8,8 +8,6 @@
 
 package org.lambdamatic.elasticsearch;
 
-import static org.hamcrest.Matchers.equalTo;
-
 import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -26,6 +24,8 @@ import org.elasticsearch.test.ESSingleNodeTestCase;
 import org.junit.Test;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.sample.BlogPostIndex;
 
@@ -34,6 +34,8 @@ import com.sample.BlogPostIndex;
  * Elasticsearch node.
  */
 public class GetOperationTest extends ESSingleNodeTestCase {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(GetOperationTest.class);
 
   private static final String BLOGPOST_INDEX_NAME = "blog_index";
   private static final String BLOGPOST_TYPE = "blogpost";
@@ -55,8 +57,8 @@ public class GetOperationTest extends ESSingleNodeTestCase {
         .add(client().prepareIndex().setIndex(BLOGPOST_INDEX_NAME).setType(BLOGPOST_TYPE)
             .setSource(source("3", "title3")))
         .execute().actionGet();
-    assertThat(bulkResponse.getItems().length, equalTo(3));
-    assertThat(bulkResponse.hasFailures(), equalTo(false));
+    Assertions.assertThat(bulkResponse.getItems().length).isEqualTo(3);
+    Assertions.assertThat(bulkResponse.hasFailures()).isEqualTo(false);
     // when
     final BlogPostIndex blogPostIndex = new BlogPostIndex(client());
     final Queue<GetResponse> queue = new ArrayBlockingQueue<>(1);
@@ -71,22 +73,23 @@ public class GetOperationTest extends ESSingleNodeTestCase {
       @Override
       public void onNext(GetResponse t) {
         queue.add(t);
-        t.forEach(System.err::println);
+        LOGGER.info(t.toString());
       }
 
       @Override
       public void onError(Throwable t) {
         Assertions.fail("Failed to retrieve element", t);
-        
+
       }
 
       @Override
       public void onComplete() {
         latch.countDown();
-        
-      }});
+
+      }
+    });
     // then
     latch.await(1, TimeUnit.SECONDS);
-    assertThat(queue.size(), equalTo(1));
+    Assertions.assertThat(queue.size()).isEqualTo(1);
   }
 }

@@ -1,0 +1,14 @@
+{
+   "documents":[
+      {
+       "index":{
+          "indexName":"blog_index",
+          "indexType":"blogpost",
+          "indexId":"1"
+        },
+       "data":{
+          "title":"Blog post"
+       }
+     }
+   ]
+}

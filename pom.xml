@@ -54,7 +54,7 @@
 		<junit.version>4.12</junit.version>
 		<assertj-core.version>3.2.0</assertj-core.version>
 		<logback-classic.version>1.0.13</logback-classic.version>
-		<nosqlunit.version>0.8.1</nosqlunit.version>
+		<json-api.version>1.0.4</json-api.version>
 	</properties>
 
 	<dependencies>
@@ -126,6 +126,13 @@
 			<version>${logback-classic.version}</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.glassfish</groupId>
+			<artifactId>javax.json</artifactId>
+			<version>${json-api.version}</version>
+			<scope>test</scope>
+		</dependency>
+
 	</dependencies>
 
 

@@ -1,0 +1,39 @@
+= Testing
+
+== Cleaning the ES cluster and loading data
+
+Integration tests should extend the `org.elasticsearch.test.ESSingleNodeTestCase` class or 
+the `org.elasticsearch.test.ESIntegTestCase` class.
+
+To clean *all indices* before running a test, the Java method *MUST* be annotated with
+`@Dataset(location="data.json")` where `data.json` is the file containing the data to load.
+This file should be in the test classpath, ie, in `src/test/resources`.
+
+The file format is the following:
+
+[code,json]
+----
+{
+   "documents":[
+      {
+       "index":{
+          "indexName":"blog_index",
+          "indexType":"blogpost",
+          "indexId":"1"
+        },
+       "data":{
+          "title":"Blog post"
+       }
+     }
+   ]
+}
+
+----
+
+The test class *MUST* also contain the following JUnit `rule`:
+
+[code,java]
+----
+@Rule
+public DatasetRule datasetRule = new DatasetRule(client()); 
+----

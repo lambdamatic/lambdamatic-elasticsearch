@@ -11,15 +11,11 @@
 
 package org.lambdamatic.elasticsearch;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import org.elasticsearch.client.Client;
+import org.assertj.core.api.Assertions;
 import org.elasticsearch.client.Requests;
-import org.junit.Rule;
+import org.elasticsearch.test.ESSingleNodeTestCase;
 import org.junit.Test;
 import org.lambdamatic.elasticsearch.annotations.Document;
-import org.lambdamatic.elasticsearch.utils.ClientRule;
-import org.lambdamatic.internal.elasticsearch.IndexMappingValidator;
 import org.lambdamatic.internal.elasticsearch.IndexStatus;
 import org.lambdamatic.internal.elasticsearch.MappingUtils;
 
@@ -29,28 +25,25 @@ import com.sample.BlogPostIndex;
 /**
  * 
  */
-public class IndexMappingValidatorTest {
+public class IndexMappingValidatorTest extends ESSingleNodeTestCase {
 
-  @Rule
-  public final ClientRule clientRule = new ClientRule();
-  
   @Test
   public void shouldCreateIndex() {
     // given
-    final Client client = clientRule.getClient();
-    client.admin().indices().delete(
+    client().admin().indices().delete(
         Requests.deleteIndexRequest(BlogPost.class.getAnnotation(Document.class).indexName()));
-    final BlogPostIndex blogPostIndex = new BlogPostIndex(client);
+    final BlogPostIndex blogPostIndex = new BlogPostIndex(client());
     // when
     final IndexStatus status = blogPostIndex.verifyIndex();
     // then
-    assertThat(status).isEqualTo(IndexStatus.OK);
+    Assertions.assertThat(status).isEqualTo(IndexStatus.OK);
   }
+  
   @Test
   public void shouldLocateIdFieldInDomainType() {
     // when
     final String idFieldName = MappingUtils.getIdFieldName(BlogPost.class);
     // then
-    assertThat(idFieldName).isEqualTo("id");
+    Assertions.assertThat(idFieldName).isEqualTo("id");
   }
 }

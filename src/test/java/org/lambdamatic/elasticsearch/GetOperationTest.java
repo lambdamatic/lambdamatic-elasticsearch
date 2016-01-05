@@ -21,7 +21,10 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.index.IndexService;
 import org.elasticsearch.test.ESSingleNodeTestCase;
+import org.junit.Rule;
 import org.junit.Test;
+import org.lambdamatic.elasticsearch.testutils.Dataset;
+import org.lambdamatic.elasticsearch.testutils.DatasetRule;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
@@ -44,25 +47,20 @@ public class GetOperationTest extends ESSingleNodeTestCase {
     return XContentFactory.jsonBuilder().startObject().field("id", id).field("title", nameValue)
         .endObject();
   }
+  
+  @Rule
+  public DatasetRule datasetRule = new DatasetRule(client()); 
 
+  
   @Test
+  @Dataset(location="blogposts.json")
   public void shouldGetSingleDocument() throws IOException, InterruptedException {
     // given
-    final IndexService indexService = createIndex(BLOGPOST_INDEX_NAME);
-    final BulkResponse bulkResponse = client().prepareBulk()
-        .add(client().prepareIndex().setIndex(BLOGPOST_INDEX_NAME).setType(BLOGPOST_TYPE).setId("1")
-            .setSource(source("1", "title1")))
-        .add(client().prepareIndex().setIndex(BLOGPOST_INDEX_NAME).setType(BLOGPOST_TYPE).setId("2")
-            .setSource(source("2", "title2")))
-        .add(client().prepareIndex().setIndex(BLOGPOST_INDEX_NAME).setType(BLOGPOST_TYPE)
-            .setSource(source("3", "title3")))
-        .execute().actionGet();
-    Assertions.assertThat(bulkResponse.getItems().length).isEqualTo(3);
-    Assertions.assertThat(bulkResponse.hasFailures()).isEqualTo(false);
-    // when
     final BlogPostIndex blogPostIndex = new BlogPostIndex(client());
     final Queue<GetResponse> queue = new ArrayBlockingQueue<>(1);
     final CountDownLatch latch = new CountDownLatch(1);
+    
+    // when
     blogPostIndex.get("1").subscribe(new Subscriber<GetResponse>() {
 
       @Override
@@ -71,9 +69,9 @@ public class GetOperationTest extends ESSingleNodeTestCase {
       }
 
       @Override
-      public void onNext(GetResponse t) {
-        queue.add(t);
-        LOGGER.info(t.toString());
+      public void onNext(GetResponse response) {
+        queue.add(response);
+        LOGGER.info(response.toString());
       }
 
       @Override

@@ -14,20 +14,20 @@ package org.lambdamatic.elasticsearch.search;
 import java.util.List;
 
 /**
- * The result of a Search
+ * The result of a Search.
  * @param <DomainType> the associated type of Document being searched
  * 
  */
 public interface SearchResult<DomainType> {
   
   /**
-   * @return the total number of matches on a queried index
+   * @return the total number of matches on a queried index.
    */
   public long getTotalCount();
   
   
   /**
-   * @return the {@link List} of matching documents
+   * @return the {@link List} of matching documents.
    */
   public List<DomainType> getDocuments();
 

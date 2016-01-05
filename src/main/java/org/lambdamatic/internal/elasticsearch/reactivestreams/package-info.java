@@ -7,7 +7,6 @@
  *******************************************************************************/
 
 /**
- * 
+ * The Reactive Streams implementation package.
  */
-
 package org.lambdamatic.internal.elasticsearch.reactivestreams;

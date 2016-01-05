@@ -12,13 +12,13 @@
 package org.lambdamatic.elasticsearch.search;
 
 /**
- * Search parameters that can be applied on a matching element
+ * Search parameters that can be applied on a matching element.
  */
 public interface MatchingElement {
   
   
   /**
-   * Boost the result on the given matching element 
+   * Boost the result on the given matching element. 
    * @param factor the boost factor
    */
   public void boost(int factor);

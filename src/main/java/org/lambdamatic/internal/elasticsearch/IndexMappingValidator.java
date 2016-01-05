@@ -23,18 +23,18 @@ import org.elasticsearch.index.IndexNotFoundException;
 /**
  * Utility class to check the mapping of a given Elasticsearch index against a domain type.
  * 
- * @param <DomainType>
+ * @param <DomainType> the type of the domain class to use to validate the index mapping
  */
 public class IndexMappingValidator<DomainType> {
 
   private BaseElasticsearchIndexImpl<DomainType, ?> elasticsearchIndex;
 
-  private IndexStatus indexStatus = null;
-  
+  private IndexValidationStatus indexStatus = null;
+
   /**
-   * Constructor
+   * Constructor.
    * 
-   * @param elasticsearchIndex
+   * @param elasticsearchIndex the associated class to manage data on the ES index.
    */
   public IndexMappingValidator(BaseElasticsearchIndexImpl<DomainType, ?> elasticsearchIndex) {
     this.elasticsearchIndex = elasticsearchIndex;
@@ -50,10 +50,10 @@ public class IndexMappingValidator<DomainType> {
    * be used and an exception will be raised.</li>
    * </ul>
    * 
-   * @return The corresponding {@link IndexStatus}
+   * @return The corresponding {@link IndexValidationStatus}
    */
-  public IndexStatus verifyIndex() {
-    if(this.indexStatus == null) {
+  public IndexValidationStatus verifyIndex() {
+    if (this.indexStatus == null) {
       final IndicesAdminClient indicesAdminClient =
           this.elasticsearchIndex.getClient().admin().indices();
       try {
@@ -66,29 +66,32 @@ public class IndexMappingValidator<DomainType> {
       } catch (IndexNotFoundException e) {
         this.indexStatus = createIndex();
       }
-    } return this.indexStatus;
+    }
+    return this.indexStatus;
   }
 
   /**
    * Creates the index with the required mappings.
-   * @return {@link IndexStatus#OK} if the operation succeeded.
+   * 
+   * @return {@link IndexValidationStatus#OK} if the operation succeeded.
    */
-  private IndexStatus createIndex() {
-    final Map<String, Object> mapping = MappingUtils.getClassMapping(this.elasticsearchIndex.getDomainType());
+  private IndexValidationStatus createIndex() {
+    final Map<String, Object> mapping =
+        MappingUtils.getClassMapping(this.elasticsearchIndex.getDomainType());
     CreateIndexAction.INSTANCE.newRequestBuilder(this.elasticsearchIndex.getClient())
         .setIndex(this.elasticsearchIndex.getIndexName())
         .addMapping(this.elasticsearchIndex.getType(), mapping).get();
-    return IndexStatus.OK;
+    return IndexValidationStatus.OK;
   }
-  
+
   /**
    * Verifies that the mappings match the associated domain type.
    * 
    * @param mappings the mappings retrieved from the Elasticsearch index.
-   * @return 
+   * @return
    */
-  private IndexStatus verifyMappings(
+  private IndexValidationStatus verifyMappings(
       final ImmutableOpenMap<String, ImmutableOpenMap<String, MappingMetaData>> mappings) {
-    return IndexStatus.OK;
+    return IndexValidationStatus.OK;
   }
 }

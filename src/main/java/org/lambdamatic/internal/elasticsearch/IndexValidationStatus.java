@@ -12,9 +12,9 @@
 package org.lambdamatic.internal.elasticsearch;
 
 /**
- * 
+ * The validation status of an ES Index.
  */
-public enum IndexStatus {
+public enum IndexValidationStatus {
 
   /** if the status is OK. */
   OK,

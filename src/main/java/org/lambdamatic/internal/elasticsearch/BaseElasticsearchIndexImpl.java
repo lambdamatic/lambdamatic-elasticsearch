@@ -21,14 +21,18 @@ import org.lambdamatic.internal.elasticsearch.reactivestreams.GetPublisher;
 import org.reactivestreams.Publisher;
 
 /**
- * @param <DomainType>
- * @param <DomainTypeSearchResult>
+ * The base implementation class for all generated classes to manage data in ES Indices.
+ * 
+ * @param <DomainType> the type of the domain class.
+ * @param <DomainTypeSearchResult> the type of the search results.
  * 
  */
 public abstract class BaseElasticsearchIndexImpl<DomainType, DomainTypeSearchResult extends SearchResult<DomainType>>
     implements LambdamaticElasticsearchIndex<DomainType, DomainTypeSearchResult> {
 
-  /** the underlying {@link Client} to connect to the Elasticsearch cluster. */
+  /**
+   * the underlying {@link Client} to connect to the Elasticsearch cluster.
+   */
   private final Client client;
 
   /** The domain type associated with this index. */
@@ -39,11 +43,11 @@ public abstract class BaseElasticsearchIndexImpl<DomainType, DomainTypeSearchRes
 
   /** Value of the <code>_type</code> field to categorize the document in the Elasticsearch. */
   private final String type;
-  
+
   private final IndexMappingValidator<?> mappingValidator;
 
   /**
-   * Constructor
+   * Constructor.
    * 
    * @param client The underlying {@link Client} to connect to the Elasticsearch cluster
    * @param domainType The domain type associated with this index
@@ -64,23 +68,24 @@ public abstract class BaseElasticsearchIndexImpl<DomainType, DomainTypeSearchRes
   Client getClient() {
     return this.client;
   }
-  
+
   /**
-   * @return the name of the index in Elasticsearch
+   * @return the name of the index in Elasticsearch.
    */
   public String getIndexName() {
     return this.indexName;
   }
-  
+
   /**
-   * @return the associated Domain type
+   * @return the associated Domain type.
    */
   public Class<DomainType> getDomainType() {
     return this.domainType;
   }
-  
+
   /**
-   * @return the value of the <code>_type</code> Lucene document field for the associated Domain type
+   * @return the value of the <code>_type</code> Lucene document field for the associated Domain
+   *         type.
    */
   public String getType() {
     return this.type;
@@ -88,10 +93,11 @@ public abstract class BaseElasticsearchIndexImpl<DomainType, DomainTypeSearchRes
 
   /**
    * Verifies the status of the corresponding index in Elasticsearch.
+   * 
    * @return the index status
    * @see IndexMappingValidator#verifyIndex()
    */
-  public IndexStatus verifyIndex() {
+  public IndexValidationStatus verifyIndex() {
     return this.mappingValidator.verifyIndex();
   }
 

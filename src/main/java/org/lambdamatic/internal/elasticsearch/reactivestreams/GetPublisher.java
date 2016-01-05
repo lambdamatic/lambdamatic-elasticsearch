@@ -20,22 +20,26 @@ import org.reactivestreams.Subscriber;
  */
 public class GetPublisher implements Publisher<GetResponse> {
 
-  /** The Elasticsearch {@link Client}.*/
+  /**
+   * The Elasticsearch {@link Client}.
+   */
   private final Client client;
-  
+
   /** The name of the index in which the <code>GET</code> operation will be performed. */
   private final String indexName;
-  
+
   /** The type of document to get. */
   private final String type;
-  
+
   /** The id of the document to get. */
   private final String documentId;
-  
+
   /**
    * Constructor.
+   * 
    * @param client the Elasticsearch {@link Client}
-   * @param indexName the name of the index in which the <code>GET</code> operation will be performed.
+   * @param indexName the name of the index in which the <code>GET</code> operation will be
+   *        performed.
    * @param type the type of document to get.
    * @param documentId the id of the document to get.
    */
@@ -49,7 +53,8 @@ public class GetPublisher implements Publisher<GetResponse> {
 
   @Override
   public void subscribe(final Subscriber<? super GetResponse> subscriber) {
-    final GetRequestBuilder requestBuilder = this.client.prepareGet(this.indexName, this.type, this.documentId);
+    final GetRequestBuilder requestBuilder =
+        this.client.prepareGet(this.indexName, this.type, this.documentId);
     final GetSubscription subscription = new GetSubscription(subscriber, requestBuilder);
     subscriber.onSubscribe(subscription);
   }

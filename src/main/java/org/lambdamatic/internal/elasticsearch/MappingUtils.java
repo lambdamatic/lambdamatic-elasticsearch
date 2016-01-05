@@ -20,7 +20,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.lambdamatic.elasticsearch.annotations.DocumentField;
 
 /**
- * 
+ * Utility class for domain class mapping in an Elasticsearch index.
  */
 public interface MappingUtils {
 
@@ -53,18 +53,22 @@ public interface MappingUtils {
    *         criteria, <code>null</code> is returned. If more than one field is matches these
    *         criteria, a {@link MappingException} is thrown.
    */
-  public static String getIdFieldName(Class<?> domainType){
-    final List<ImmutablePair<Field, DocumentField>> candidateFields = Stream.of(domainType.getDeclaredFields()).map(field -> ImmutablePair.of(field, field.getAnnotation(DocumentField.class))).filter(pair -> 
-    pair.right != null && pair.right.id()).collect(Collectors.toList());
-    if(candidateFields.isEmpty()) {
+  public static String getIdFieldName(Class<?> domainType) {
+    final List<ImmutablePair<Field, DocumentField>> candidateFields =
+        Stream.of(domainType.getDeclaredFields())
+            .map(field -> ImmutablePair.of(field, field.getAnnotation(DocumentField.class)))
+            .filter(pair -> pair.right != null && pair.right.id()).collect(Collectors.toList());
+    if (candidateFields.isEmpty()) {
       return null;
-    } else if(candidateFields.size() > 1) {
-      final String fieldNames = candidateFields.stream().map(pair -> pair.left.getName()).collect(Collectors.joining(", "));
-      throw new MappingException("More than one field is annotated with '@DocumentField(id=true)': {}", fieldNames);
+    } else if (candidateFields.size() > 1) {
+      final String fieldNames = candidateFields.stream().map(pair -> pair.left.getName())
+          .collect(Collectors.joining(", "));
+      throw new MappingException(
+          "More than one field is annotated with '@DocumentField(id=true)': {}", fieldNames);
     }
     final Field domainField = candidateFields.get(0).left;
     final DocumentField domainFieldAnnotation = candidateFields.get(0).right;
-    if(domainFieldAnnotation.name() == null || domainFieldAnnotation.name().isEmpty()) {
+    if (domainFieldAnnotation.name() == null || domainFieldAnnotation.name().isEmpty()) {
       return domainField.getName();
     }
     return domainFieldAnnotation.name();

@@ -7,7 +7,6 @@
  *******************************************************************************/
 
 /**
- * 
+ * Internal package for implementations.
  */
-
 package org.lambdamatic.internal.elasticsearch;

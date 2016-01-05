@@ -7,7 +7,6 @@
  *******************************************************************************/
 
 /**
- * 
+ * Package for annotations.
  */
-
 package org.lambdamatic.elasticsearch.annotations;

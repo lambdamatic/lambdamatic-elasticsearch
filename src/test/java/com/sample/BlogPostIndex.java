@@ -14,7 +14,7 @@ package com.sample;
 import org.elasticsearch.client.Client;
 import org.lambdamatic.elasticsearch.search.SearchResult;
 import org.lambdamatic.internal.elasticsearch.BaseElasticsearchIndexImpl;
-import org.lambdamatic.internal.elasticsearch.IndexStatus;
+import org.lambdamatic.internal.elasticsearch.IndexValidationStatus;
 
 /**
  * 

@@ -16,7 +16,7 @@ import org.elasticsearch.client.Requests;
 import org.elasticsearch.test.ESSingleNodeTestCase;
 import org.junit.Test;
 import org.lambdamatic.elasticsearch.annotations.Document;
-import org.lambdamatic.internal.elasticsearch.IndexStatus;
+import org.lambdamatic.internal.elasticsearch.IndexValidationStatus;
 import org.lambdamatic.internal.elasticsearch.MappingUtils;
 
 import com.sample.BlogPost;
@@ -34,9 +34,9 @@ public class IndexMappingValidatorTest extends ESSingleNodeTestCase {
         Requests.deleteIndexRequest(BlogPost.class.getAnnotation(Document.class).indexName()));
     final BlogPostIndex blogPostIndex = new BlogPostIndex(client());
     // when
-    final IndexStatus status = blogPostIndex.verifyIndex();
+    final IndexValidationStatus status = blogPostIndex.verifyIndex();
     // then
-    Assertions.assertThat(status).isEqualTo(IndexStatus.OK);
+    Assertions.assertThat(status).isEqualTo(IndexValidationStatus.OK);
   }
   
   @Test

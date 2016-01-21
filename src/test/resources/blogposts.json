@@ -1,14 +1,52 @@
 {
-   "documents":[
-      {
-       "index":{
+  "indices":{
+    "blog_index":{
+      "analysis":{
+        "analyzer":{
+          "ngram":{
+            "tokenizer":"ngram_tokenizer",
+            "filter":[
+              "lowercase"
+            ]
+          }
+        },
+        "tokenizer":{
+          "ngram_tokenizer":{
+            "type":"edgeNGram",
+            "min_gram":"1",
+            "max_gram":"10",
+            "token_chars":[
+              "letter",
+              "digit"
+            ]
+          }
+        }
+      },
+      "mappings":{
+        "blogpost":{
+          "properties":{
+            "title":{
+              "type":"string",
+              "analyzer":"ngram",
+              "search_analyzer":"simple"
+            }
+          }
+        }
+      }
+    }
+  },
+  "documents":[
+    {
+      "indices":[
+        {
           "indexName":"blog_index",
           "indexType":"blogpost",
           "indexId":"1"
-        },
-       "data":{
-          "title":"Blog post"
-       }
-     }
-   ]
+        }
+      ],
+      "data":{
+        "title":"Blog post"
+      }
+    }
+  ]
 }

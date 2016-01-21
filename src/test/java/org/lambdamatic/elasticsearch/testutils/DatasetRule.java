@@ -12,7 +12,12 @@ import static org.assertj.core.api.Assertions.fail;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.json.Json;
@@ -22,12 +27,20 @@ import javax.json.JsonReader;
 import javax.json.JsonValue;
 
 import org.assertj.core.api.Assertions;
+import org.elasticsearch.action.admin.cluster.stats.ClusterStatsRequest;
+import org.elasticsearch.action.admin.cluster.stats.ClusterStatsResponse;
+import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
-import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.IndicesAdminClient;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.shard.DocsStats;
 import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
@@ -40,9 +53,12 @@ import org.slf4j.LoggerFactory;
  */
 public class DatasetRule implements MethodRule {
 
-  private final static Logger LOGGER = LoggerFactory.getLogger(DatasetRule.class);
+  /** The logger. */
+  private static final Logger LOGGER = LoggerFactory.getLogger(DatasetRule.class);
 
-  /** The {@link Client} to connect to the ES node(s). */
+  /**
+   * The {@link Client} to connect to the ES node(s).
+   */
   private final Client client;
 
   /**
@@ -61,6 +77,9 @@ public class DatasetRule implements MethodRule {
       cleanIndices();
       loadDataset(method.getMethod().getAnnotation(Dataset.class));
     } catch (IOException e) {
+      fail("Failed to load the specified dataset", e);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       fail("Failed to load the specified dataset", e);
     }
     return base;
@@ -85,60 +104,131 @@ public class DatasetRule implements MethodRule {
    * @param dataset the {@link Dataset} specification
    * @throws IOException if an I/O error occurs while closing the {@link InputStream} for the
    *         dataset location.
+   * @throws InterruptedException may occur while thread is sleeping, to give time to Elasticsearch
+   *         to actually index the data that was sent.
    */
-  private void loadDataset(final Dataset dataset) throws IOException {
+  private void loadDataset(final Dataset dataset) throws IOException, InterruptedException {
     if (dataset == null || dataset.location() == null || dataset.location().isEmpty()) {
+      LOGGER.warn("Skipping dataset loading");
       return;
     }
+    LOGGER.info("Loading dataset using '{}'", dataset.location());
     try (
         final InputStream jsonStream =
             Thread.currentThread().getContextClassLoader().getResourceAsStream(dataset.location());
         final JsonReader jsonReader = Json.createReader(jsonStream);) {
       final JsonObject root = jsonReader.readObject();
-      // locate the 'documents' entry
-      final Entry<String, JsonValue> documentsEntry =
-          root.entrySet().stream().filter(entry -> entry.getKey().equals("documents")).findFirst()
-              .orElseThrow(() -> new InvalidDatasetException(
-                  "Dataset did not contain a 'documents' entry in the root JSON object."));
-      final JsonArray documents = (JsonArray) documentsEntry.getValue();
-      documents.stream()
-          // convert each entry into a JsonObject
-          .map(doc -> (JsonObject) doc)
-          // for each 'document'
-          .forEach(doc -> {
-            // TODO: support multiple indices per document
-            // TODO: support index mapping
-            // the index in which the document should be stored
-            final JsonObject index = getIndex(doc);
+      // configure the 'indices'
+      createIndices(root);
+      // locate the 'documents' entry or throw an exception
+      loadDocuments(root);
+    } finally {
+      LOGGER.info("Loading dataset done.");
+
+    }
+  }
+
+  /**
+   * Creates and configures the indices declared in the 'indices' element at the root of the
+   * dataset.
+   * 
+   * @param root the root {@link JsonObject}.
+   */
+  private void createIndices(final JsonObject root) {
+    final JsonObject indices = root.getJsonObject("indices");
+    if (indices == null) {
+      LOGGER.info("No 'indices' entry found in the dataset file.");
+    } else {
+      indices.entrySet().stream().forEach(indexEntry -> {
+        final String indexName = indexEntry.getKey();
+        // prepare the index creation
+        final CreateIndexRequest createIndexRequest = new CreateIndexRequest(indexName);
+        // update the index with the specific configuration
+        final JsonObject indexSettings = (JsonObject) indexEntry.getValue();
+        createIndexRequest.settings(indexSettings.toString());
+        // locate and parse the optional 'mappings' element
+        final JsonObject mappings = indexSettings.getJsonObject("mappings");
+        if (mappings == null) {
+          LOGGER.info("No 'mappings' entry found for index {} in dataset file.", indexName);
+        } else {
+          // include the type mappings in the index creation request
+          mappings.entrySet().forEach(typeMapping -> {
+            createIndexRequest.mapping(typeMapping.getKey(), typeMapping.getValue().toString());
+          });
+        }
+        // create the index with all the config
+        client.admin().indices().create(createIndexRequest).actionGet();
+        // wait for shards to be ready
+      });
+    }
+  }
+
+
+  /**
+   * Indexes all the documents declared in the 'documents' element at the root of the
+   * dataset.
+   * 
+   * @param root the root {@link JsonObject}.
+   */
+  private void loadDocuments(final JsonObject root) throws InterruptedException {
+    final JsonArray documents = root.getJsonArray("documents");
+    if(documents == null) {
+      LOGGER.info("No 'documents' array defined in the dataset.");
+      return;
+    }
+    documents.stream()
+        // convert each entry into a JsonObject
+        .map(doc -> (JsonObject) doc)
+        // for each 'document'
+        .forEach(doc -> {
+          // the index in which the document should be stored
+          final JsonArray documentIndices = getIndices(doc);
+          // the document to store
+          final JsonObject data = getDocumentData(doc);
+          // add the document into the indices
+          documentIndices.stream().map(index -> (JsonObject) index).forEach(index -> {
             final String indexName = index.getString("indexName");
             final String indexType = index.getString("indexType");
             final String indexId = index.getString("indexId");
-            client.admin().indices().prepareCreate(indexName).execute();
-            // the document to store
-            final JsonObject data = getDocumentData(doc);
-            // add the document into the index
+            LOGGER.debug("Adding document at {}/{}/{}: {}", indexName, indexType, indexId, data);
             final IndexResponse indexResponse = client.prepareIndex(indexName, indexType)
                 .setId(indexId).setSource(data).execute().actionGet();
             Assertions.assertThat(indexResponse.isCreated()).isEqualTo(true);
           });
-    } ;
+        });
+    // give Elasticsearch a bit of time to actually index all the data that was sent
+    if (!documents.isEmpty()) {
+      long docCount = 0L;
+      while ((docCount = countDocs()) < documents.size()) {
+        Thread.sleep(TimeUnit.SECONDS.toMillis(1));
+      }
+    }
   }
 
   /**
-   * Retrieves the value of the <code>index</code> entry from the given <code>doc</code>
+   * @return the <strong>current</strong> number of documents in the indices.
+   */
+  private long countDocs() {
+    final ClusterStatsResponse clusterStats =
+        client.admin().cluster().clusterStats(new ClusterStatsRequest()).actionGet();
+    return clusterStats.getIndicesStats().getDocs().getCount();
+  }
+
+  /**
+   * Retrieves the value of the <code>indices</code> entry from the given <code>doc</code>
    * {@link JsonObject}
    * 
    * @param doc the {@link JsonObject} to analyze
-   * @return the <code>index</code> entry value as a {@link JsonObject}
+   * @return the <code>indices</code> entry value as a {@link JsonArray}
    * @throws InvalidDatasetException if no entry named <code>index</code> could be found.
    */
-  private JsonObject getIndex(final JsonObject doc) {
-    final Entry<String, JsonValue> indexEntry =
-        doc.entrySet().stream().filter(entry -> entry.getKey().equals("index")).findFirst()
+  private JsonArray getIndices(final JsonObject doc) {
+    final Entry<String, JsonValue> indicesEntry =
+        doc.entrySet().stream().filter(entry -> entry.getKey().equals("indices")).findFirst()
             .orElseThrow(() -> new InvalidDatasetException(
-                "Dataset did not contain an 'index' entry in the document JSON object."));
-    final JsonObject index = (JsonObject) indexEntry.getValue();
-    return index;
+                "Dataset did not contain an 'indices' entry in the document JSON object."));
+    final JsonArray indices = (JsonArray) indicesEntry.getValue();
+    return indices;
   }
 
   /**

@@ -13,22 +13,22 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
-import org.lambdamatic.elasticsearch.LambdamaticElasticsearchIndex;
+import org.lambdamatic.elasticsearch.ElasticsearchDomainTypeManager;
 import org.lambdamatic.elasticsearch.annotations.Document;
 import org.lambdamatic.elasticsearch.search.SearchExpression;
-import org.lambdamatic.elasticsearch.search.SearchResult;
 import org.lambdamatic.internal.elasticsearch.reactivestreams.GetPublisher;
+import org.lambdamatic.internal.elasticsearch.reactivestreams.SearchPublisher;
 import org.reactivestreams.Publisher;
 
 /**
- * The base implementation class for all generated classes to manage data in ES Indices.
+ * The base implementation class for all generated entity managers.
  * 
- * @param <DomainType> the type of the domain class.
- * @param <DomainTypeSearchResult> the type of the search results.
+ * @param <DomainType> the type of the domain document.
+ * @param <QueryType> the query type associated with the domain document.
  * 
  */
-public abstract class BaseElasticsearchIndexImpl<DomainType, DomainTypeSearchResult extends SearchResult<DomainType>>
-    implements LambdamaticElasticsearchIndex<DomainType, DomainTypeSearchResult> {
+public abstract class BaseElasticsearchDomainTypeManagerImpl<DomainType, QueryType extends QueryMetadata<DomainType>>
+    implements ElasticsearchDomainTypeManager<DomainType, QueryType> {
 
   /**
    * the underlying {@link Client} to connect to the Elasticsearch cluster.
@@ -44,7 +44,7 @@ public abstract class BaseElasticsearchIndexImpl<DomainType, DomainTypeSearchRes
   /** Value of the <code>_type</code> field to categorize the document in the Elasticsearch. */
   private final String type;
 
-  private final IndexMappingValidator<?> mappingValidator;
+  private final IndexMappingValidator mappingValidator;
 
   /**
    * Constructor.
@@ -52,7 +52,7 @@ public abstract class BaseElasticsearchIndexImpl<DomainType, DomainTypeSearchRes
    * @param client The underlying {@link Client} to connect to the Elasticsearch cluster
    * @param domainType The domain type associated with this index
    */
-  public BaseElasticsearchIndexImpl(final Client client, final Class<DomainType> domainType) {
+  public BaseElasticsearchDomainTypeManagerImpl(final Client client, final Class<DomainType> domainType) {
     this.client = client;
     this.domainType = domainType;
     final Document documentAnnotation = domainType.getAnnotation(Document.class);
@@ -62,11 +62,7 @@ public abstract class BaseElasticsearchIndexImpl<DomainType, DomainTypeSearchRes
     }
     this.indexName = documentAnnotation.indexName();
     this.type = documentAnnotation.type();
-    this.mappingValidator = new IndexMappingValidator<>(this);
-  }
-
-  Client getClient() {
-    return this.client;
+    this.mappingValidator = new IndexMappingValidator(this.client, this.domainType, this.indexName, this.type);
   }
 
   /**
@@ -118,9 +114,8 @@ public abstract class BaseElasticsearchIndexImpl<DomainType, DomainTypeSearchRes
   }
 
   @Override
-  public Publisher<SearchResponse> search(final SearchExpression<DomainType> expression) {
-    // TODO Auto-generated method stub
-    return null;
+  public Publisher<SearchResponse> search(final SearchExpression<QueryType> expression) {
+    return new SearchPublisher<>(this.client, this.indexName, this.type, expression);
   }
 
 }

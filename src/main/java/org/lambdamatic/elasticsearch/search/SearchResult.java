@@ -14,7 +14,7 @@ package org.lambdamatic.elasticsearch.search;
 import java.util.List;
 
 /**
- * The result of a Search.
+ * The result of a SearchOperation.
  * @param <DomainType> the associated type of Document being searched
  * 
  */

@@ -16,14 +16,15 @@ import org.elasticsearch.client.Requests;
 import org.elasticsearch.test.ESSingleNodeTestCase;
 import org.junit.Test;
 import org.lambdamatic.elasticsearch.annotations.Document;
+import org.lambdamatic.internal.elasticsearch.IndexMappingValidator;
 import org.lambdamatic.internal.elasticsearch.IndexValidationStatus;
 import org.lambdamatic.internal.elasticsearch.MappingUtils;
 
 import com.sample.BlogPost;
-import com.sample.BlogPostIndex;
+import com.sample.BlogPosts;
 
 /**
- * 
+ * Testing the {@link IndexMappingValidator}.
  */
 public class IndexMappingValidatorTest extends ESSingleNodeTestCase {
 
@@ -32,7 +33,7 @@ public class IndexMappingValidatorTest extends ESSingleNodeTestCase {
     // given
     client().admin().indices().delete(
         Requests.deleteIndexRequest(BlogPost.class.getAnnotation(Document.class).indexName()));
-    final BlogPostIndex blogPostIndex = new BlogPostIndex(client());
+    final BlogPosts blogPostIndex = new BlogPosts(client());
     // when
     final IndexValidationStatus status = blogPostIndex.verifyIndex();
     // then

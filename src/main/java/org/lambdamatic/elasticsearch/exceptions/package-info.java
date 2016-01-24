@@ -6,29 +6,7 @@
  * Contributors: Red Hat - Initial Contribution
  *******************************************************************************/
 
-package com.sample;
-
-import java.util.Date;
-
-import org.lambdamatic.elasticsearch.annotations.DocumentField;
-
 /**
- * A blog post comment.
+ * Package for exceptions.
  */
-public class Comment {
-
-  @DocumentField
-  private String name;
-
-  @DocumentField
-  private String comment;
-
-  @DocumentField
-  private int age;
-
-  @DocumentField
-  private int stars;
-
-  @DocumentField
-  private Date date;
-}
+package org.lambdamatic.elasticsearch.exceptions;

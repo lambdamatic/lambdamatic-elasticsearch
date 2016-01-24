@@ -16,7 +16,7 @@ import org.reactivestreams.Subscriber;
 
 /**
  * A <a href= "https://github.com/reactive-streams/reactive-streams-jvm/blob/v1.0.0/README.md">
- * Reactive Streams</a> {@link Publisher} a <code>GET</code> operation.
+ * Reactive Streams</a> {@link Publisher} a <code>Get</code> operation.
  */
 public class GetPublisher implements Publisher<GetResponse> {
 
@@ -25,7 +25,7 @@ public class GetPublisher implements Publisher<GetResponse> {
    */
   private final Client client;
 
-  /** The name of the index in which the <code>GET</code> operation will be performed. */
+  /** The name of the index in which the <code>Get</code> operation will be performed. */
   private final String indexName;
 
   /** The type of document to get. */
@@ -38,7 +38,7 @@ public class GetPublisher implements Publisher<GetResponse> {
    * Constructor.
    * 
    * @param client the Elasticsearch {@link Client}
-   * @param indexName the name of the index in which the <code>GET</code> operation will be
+   * @param indexName the name of the index in which the <code>Get</code> operation will be
    *        performed.
    * @param type the type of document to get.
    * @param documentId the id of the document to get.
@@ -54,7 +54,8 @@ public class GetPublisher implements Publisher<GetResponse> {
   @Override
   public void subscribe(final Subscriber<? super GetResponse> subscriber) {
     final GetRequestBuilder requestBuilder =
-        this.client.prepareGet(this.indexName, this.type, this.documentId);
+        this.client.prepareGet(this.indexName, this.type, this.documentId).setFetchSource(true)
+            .setFields("title");
     final GetSubscription subscription = new GetSubscription(subscriber, requestBuilder);
     subscriber.onSubscribe(subscription);
   }

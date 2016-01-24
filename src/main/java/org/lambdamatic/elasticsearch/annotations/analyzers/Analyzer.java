@@ -9,17 +9,20 @@
  *     Red Hat - Initial Contribution
  *******************************************************************************/
 
-package org.lambdamatic.elasticsearch.search;
+package org.lambdamatic.elasticsearch.annotations.analyzers;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * SearchOperation parameters that can be applied on a matching element.
+ * Meta-annotation for field analyzers.
  */
-public interface MatchingElement {
-  
-  
-  /**
-   * Boost the result on the given matching element. 
-   * @param factor the boost factor
-   */
-  public void boost(int factor);
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface Analyzer {
+
+  /** the name of the analyzer. */
+  public String value();
 }

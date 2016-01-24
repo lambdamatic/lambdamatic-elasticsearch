@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.assertj.core.api.Assertions;
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.test.ESSingleNodeTestCase;
@@ -31,36 +32,31 @@ import org.slf4j.LoggerFactory;
 import com.sample.BlogPosts;
 
 /**
- * Testing the Reactive Streams implementation for the <code>GET</code> operation on a single
+ * Testing the Reactive Streams implementation for the <code>SEARCH</code> operation on a single
  * Elasticsearch node.
  */
-public class GetOperationTest extends ESSingleNodeTestCase {
+public class SearchOperationTest extends ESSingleNodeTestCase {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(GetOperationTest.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(SearchOperationTest.class);
 
   private static final String BLOGPOST_INDEX_NAME = "blog_index";
-  
-  private static final String BLOGPOST_TYPE = "blogpost";
 
-  private XContentBuilder source(String id, String nameValue) throws IOException {
-    return XContentFactory.jsonBuilder().startObject().field("id", id).field("title", nameValue)
-        .endObject();
-  }
+  private static final String BLOGPOST_TYPE = "blogpost";
 
   @Rule
   public DatasetRule datasetRule = new DatasetRule(client());
 
 
   @Test
-  @Dataset(documents = "blogposts.json")
-  public void shouldGetSingleDocument() throws IOException, InterruptedException {
+  @Dataset(settings = "settings.json", documents = "blogposts.json")
+  public void shouldFindSingleDocument() throws IOException, InterruptedException {
     // given
     final BlogPosts blogPosts = new BlogPosts(client());
-    final Queue<GetResponse> queue = new ArrayBlockingQueue<>(1);
+    final Queue<SearchResponse> queue = new ArrayBlockingQueue<>(1);
     final CountDownLatch latch = new CountDownLatch(1);
 
     // when
-    blogPosts.get("1").subscribe(new Subscriber<GetResponse>() {
+    blogPosts.search(p -> p.title.similar("post")).subscribe(new Subscriber<SearchResponse>() {
 
       @Override
       public void onSubscribe(Subscription s) {
@@ -68,27 +64,27 @@ public class GetOperationTest extends ESSingleNodeTestCase {
       }
 
       @Override
-      public void onNext(GetResponse response) {
+      public void onNext(SearchResponse response) {
         queue.add(response);
         LOGGER.info(response.toString());
       }
 
       @Override
       public void onError(Throwable t) {
-        Assertions.fail("Failed to retrieve element", t);
+        Assertions.fail("Failed to retrieve next element", t);
+        latch.countDown();
       }
 
       @Override
       public void onComplete() {
         latch.countDown();
       }
-      
+
     });
     // then
-    latch.await(1, TimeUnit.SECONDS);
+    latch.await();
     Assertions.assertThat(queue.size()).isEqualTo(1);
-    final GetResponse response = queue.poll();
-    Assertions.assertThat(response.getId()).isEqualTo("1");
-    Assertions.assertThat(response.getField("title").getValue()).isEqualTo("\"Blog post\"");
+    final SearchResponse response = queue.poll();
+    Assertions.assertThat(response.getHits().getTotalHits()).isEqualTo(1);
   }
 }

@@ -14,16 +14,16 @@ import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.lambdamatic.elasticsearch.search.SearchExpression;
-import org.lambdamatic.elasticsearch.search.SearchResult;
+import org.lambdamatic.internal.elasticsearch.QueryMetadata;
 import org.reactivestreams.Publisher;
 
 /**
  * Interface to manage data in Elasticsearch Indexes.
  * 
  * @param <DomainType> the type of documents stored in the associated index.
- * @param <DomainTypeSearchResult> the result of a search for DomainType documents
+ * @param <QueryType> the {@link QueryMetadata} type associated with the <code>DomainType</code>
  */
-public interface LambdamaticElasticsearchIndex<DomainType, DomainTypeSearchResult extends SearchResult<DomainType>> {
+public interface ElasticsearchDomainTypeManager<DomainType, QueryType extends QueryMetadata<DomainType>> {
 
   /**
    * Adds the given document in the index
@@ -68,5 +68,5 @@ public interface LambdamaticElasticsearchIndex<DomainType, DomainTypeSearchResul
    *         "https://github.com/reactive-streams/reactive-streams-jvm/blob/v1.0.0/README.md">
    *         Reactive Streams</a> {@link Publisher} for the domain-type specific search result.
    */
-  public Publisher<SearchResponse> search(SearchExpression<DomainType> expression);
+  public Publisher<SearchResponse> search(SearchExpression<QueryType> expression);
 }

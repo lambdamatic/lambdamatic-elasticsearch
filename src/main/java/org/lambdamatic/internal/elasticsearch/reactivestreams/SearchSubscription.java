@@ -12,25 +12,30 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.get.GetRequestBuilder;
-import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.search.SearchRequestBuilder;
+import org.elasticsearch.action.search.SearchResponse;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A <a href= "https://github.com/reactive-streams/reactive-streams-jvm/blob/v1.0.0/README.md">
- * Reactive Streams</a> {@link Subscription} a <code>Get</code> operation.
+ * Reactive Streams</a> {@link Subscription} a <code>SearchOperation</code> operation.
  */
-public class GetSubscription implements Subscription {
+public class SearchSubscription implements Subscription {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(SearchSubscription.class);
+  
   /**
    * the associated {@link Subscriber}.
    */
-  final Subscriber<? super GetResponse> subscriber;
+  final Subscriber<? super SearchResponse> subscriber;
 
   /**
-   * The {@link GetRequestBuilder} to perform the <code>Get</code> operation.
+   * The {@link GetRequestBuilder} to perform the <code>SearchOperation</code> operation.
    */
-  private final GetRequestBuilder requestBuilder;
+  private final SearchRequestBuilder requestBuilder;
 
   /** A flag to indicate if the operation was cancelled. */
   private AtomicBoolean cancelled = new AtomicBoolean(false);
@@ -39,10 +44,10 @@ public class GetSubscription implements Subscription {
    * Constructor.
    * 
    * @param subscriber the {@link Subscriber} for this {@link Subscription}.
-   * @param requestBuilder the {@link GetRequestBuilder} to perform the <code>Get</code> operation.
+   * @param requestBuilder the {@link SearchRequestBuilder} to perform the <code>SearchOperation</code> operation.
    */
-  public GetSubscription(final Subscriber<? super GetResponse> subscriber,
-      final GetRequestBuilder requestBuilder) {
+  public SearchSubscription(final Subscriber<? super SearchResponse> subscriber,
+      final SearchRequestBuilder requestBuilder) {
     this.subscriber = subscriber;
     this.requestBuilder = requestBuilder;
   }
@@ -50,20 +55,20 @@ public class GetSubscription implements Subscription {
   @Override
   public void request(final long n) {
     if (!this.cancelled.get()) {
-      this.requestBuilder
-          .execute(new ActionListener<GetResponse>() {
+      LOGGER.debug("Executing query: {}", this.requestBuilder.toString());
+      this.requestBuilder.execute(new ActionListener<SearchResponse>() {
 
-            @Override
-            public void onResponse(final GetResponse response) {
-              GetSubscription.this.subscriber.onNext(response);
-              GetSubscription.this.subscriber.onComplete();
-            }
+        @Override
+        public void onResponse(final SearchResponse response) {
+          SearchSubscription.this.subscriber.onNext(response);
+          SearchSubscription.this.subscriber.onComplete();
+        }
 
-            @Override
-            public void onFailure(Throwable e) {
-              GetSubscription.this.subscriber.onError(e);
-            }
-          });
+        @Override
+        public void onFailure(Throwable e) {
+          SearchSubscription.this.subscriber.onError(e);
+        }
+      });
     }
   }
 

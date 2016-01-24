@@ -8,27 +8,16 @@
 
 package com.sample;
 
-import java.util.Date;
-
 import org.lambdamatic.elasticsearch.annotations.DocumentField;
+import org.lambdamatic.elasticsearch.search.SearchableElement;
+import org.lambdamatic.internal.elasticsearch.QueryMetadata;
 
 /**
- * A blog post comment.
+ * Generated.
  */
-public class Comment {
+// FIXME: this class MUST be generated
+public class QBlogPost implements QueryMetadata<BlogPost> {
 
-  @DocumentField
-  private String name;
-
-  @DocumentField
-  private String comment;
-
-  @DocumentField
-  private int age;
-
-  @DocumentField
-  private int stars;
-
-  @DocumentField
-  private Date date;
+  @DocumentField(name = "title")
+  public SearchableElement title;
 }

@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import org.elasticsearch.action.admin.indices.create.CreateIndexAction;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequest;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
+import org.elasticsearch.client.Client;
 import org.elasticsearch.client.IndicesAdminClient;
 import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
@@ -21,13 +22,20 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.IndexNotFoundException;
 
 /**
- * Utility class to check the mapping of a given Elasticsearch index against a domain type.
+ * Utility class to validate the mapping of a given Elasticsearch index with its associated domain
+ * type.
  * 
- * @param <DomainType> the type of the domain class to use to validate the index mapping
+ * @param the type of the domain class to use to validate the index mapping
  */
-public class IndexMappingValidator<DomainType> {
+public class IndexMappingValidator {
 
-  private BaseElasticsearchIndexImpl<DomainType, ?> elasticsearchIndex;
+  private final Client client;
+  
+  private final Class<?> domainType;
+  
+  private final String indexName;
+  
+  private final String type;
 
   private IndexValidationStatus indexStatus = null;
 
@@ -36,8 +44,11 @@ public class IndexMappingValidator<DomainType> {
    * 
    * @param elasticsearchIndex the associated class to manage data on the ES index.
    */
-  public IndexMappingValidator(BaseElasticsearchIndexImpl<DomainType, ?> elasticsearchIndex) {
-    this.elasticsearchIndex = elasticsearchIndex;
+  public IndexMappingValidator(final Client client, final Class<?> domainType, final String indexName, final String type) {
+    this.client = client;
+    this.domainType = domainType;
+    this.indexName = indexName;
+    this.type = type;
   }
 
   /**
@@ -55,10 +66,10 @@ public class IndexMappingValidator<DomainType> {
   public IndexValidationStatus verifyIndex() {
     if (this.indexStatus == null) {
       final IndicesAdminClient indicesAdminClient =
-          this.elasticsearchIndex.getClient().admin().indices();
+          this.client.admin().indices();
       try {
         final GetMappingsResponse mappingsResponse = indicesAdminClient
-            .getMappings(new GetMappingsRequest().indices(this.elasticsearchIndex.getIndexName()))
+            .getMappings(new GetMappingsRequest().indices(this.indexName))
             .actionGet(new TimeValue(1, TimeUnit.SECONDS));
         final ImmutableOpenMap<String, ImmutableOpenMap<String, MappingMetaData>> mappings =
             mappingsResponse.mappings();
@@ -77,10 +88,10 @@ public class IndexMappingValidator<DomainType> {
    */
   private IndexValidationStatus createIndex() {
     final Map<String, Object> mapping =
-        MappingUtils.getClassMapping(this.elasticsearchIndex.getDomainType());
-    CreateIndexAction.INSTANCE.newRequestBuilder(this.elasticsearchIndex.getClient())
-        .setIndex(this.elasticsearchIndex.getIndexName())
-        .addMapping(this.elasticsearchIndex.getType(), mapping).get();
+        MappingUtils.getClassMapping(this.domainType);
+    CreateIndexAction.INSTANCE.newRequestBuilder(this.client)
+        .setIndex(this.indexName)
+        .addMapping(this.type, mapping).get();
     return IndexValidationStatus.OK;
   }
 

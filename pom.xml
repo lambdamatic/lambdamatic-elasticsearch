@@ -50,18 +50,19 @@
 		<lucene.version>5.3.1</lucene.version>
 		<commons-io.version>2.4</commons-io.version>
 		<mustachejava.version>0.9.1</mustachejava.version>
-		<slf4j-api.version>1.7.5</slf4j-api.version>
 		<junit.version>4.12</junit.version>
 		<assertj-core.version>3.2.0</assertj-core.version>
+		<slf4j-api.version>1.7.5</slf4j-api.version>
 		<logback-classic.version>1.0.13</logback-classic.version>
 		<json-api.version>1.0.4</json-api.version>
+		<reactive-streams.version>1.0.0</reactive-streams.version>
 	</properties>
 
 	<dependencies>
 		<dependency>
 			<groupId>org.reactivestreams</groupId>
 			<artifactId>reactive-streams</artifactId>
-			<version>1.0.0</version>
+			<version>${reactive-streams.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.lambdamatic</groupId>

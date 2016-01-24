@@ -12,17 +12,15 @@
 package com.sample;
 
 import org.elasticsearch.client.Client;
-import org.lambdamatic.elasticsearch.search.SearchResult;
-import org.lambdamatic.internal.elasticsearch.BaseElasticsearchIndexImpl;
-import org.lambdamatic.internal.elasticsearch.IndexValidationStatus;
+import org.lambdamatic.internal.elasticsearch.BaseElasticsearchDomainTypeManagerImpl;
 
 /**
- * 
+ * Manager for the {@link BlogPost} entities stored in Elasticsearch.
  */
-public class BlogPostIndex extends BaseElasticsearchIndexImpl<BlogPost, SearchResult<BlogPost>> {
+public class BlogPosts extends BaseElasticsearchDomainTypeManagerImpl<BlogPost, QBlogPost> {
 
-  public BlogPostIndex(final Client client) {
+  public BlogPosts(final Client client) {
     super(client, BlogPost.class);
   }
-
+  
 }

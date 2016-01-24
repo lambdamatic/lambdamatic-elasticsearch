@@ -32,18 +32,24 @@ public @interface DocumentField {
   public boolean id() default false;
 
   /**
-   * Flag to indicate if the annotated {@link DocumentField} is stored.
+   * Flag to indicate if the annotated {@link DocumentField} is stored in the index.
    */
   public boolean stored() default false;
-
-  /**
-   * Flag to indicate if the annotated {@link DocumentField} is indexed.
-   */
-  public boolean indexed() default false;
 
   /**
    * Flag to indicate if this field should be part of the <quote>_all</quote> field of this parent
    * document.
    */
   public boolean includeInAllField() default true;
+
+  /**
+   * The copy_to parameter allows you to create custom <code>_all</code> fields. In other words, the
+   * values of multiple fields can be copied into a group field, which can then be queried as a
+   * single field.
+   * 
+   * See
+   * <a href="https://www.elastic.co/guide/en/elasticsearch/reference/2.1/copy-to.html">copy_to</a>
+   * in Elasticsearch docs.
+   */
+  public String copyTo() default "";
 }

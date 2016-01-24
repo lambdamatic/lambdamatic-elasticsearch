@@ -64,7 +64,7 @@ public interface MappingUtils {
       final String fieldNames = candidateFields.stream().map(pair -> pair.left.getName())
           .collect(Collectors.joining(", "));
       throw new MappingException(
-          "More than one field is annotated with '@DocumentField(id=true)': {}", fieldNames);
+          "More than one field is annotated with '@StringField(id=true)': {}", fieldNames);
     }
     final Field domainField = candidateFields.get(0).left;
     final DocumentField domainFieldAnnotation = candidateFields.get(0).right;

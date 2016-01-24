@@ -17,13 +17,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to specify which dataset to use in the test
+ * Annotation to specify which data set to use in the test.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface Dataset {
 
-  /** the path to the file containing the data to load in Elasticsearch. */
-  public String location();
+  /** the path to the file containing the index settings to configure in Elasticsearch. */
+  public String settings() default "";
 
+  /** the path to the file containing the document to load in Elasticsearch. */
+  public String documents() default "";
+  
 }

@@ -75,7 +75,8 @@ public class DatasetRule implements MethodRule {
   public Statement apply(Statement base, FrameworkMethod method, Object target) {
     try {
       cleanIndices();
-      loadDataset(method.getMethod().getAnnotation(Dataset.class));
+      createIndices(method.getMethod().getAnnotation(Dataset.class));
+      loadDocuments(method.getMethod().getAnnotation(Dataset.class));
     } catch (IOException e) {
       fail("Failed to load the specified dataset", e);
     } catch (InterruptedException e) {
@@ -99,7 +100,7 @@ public class DatasetRule implements MethodRule {
   }
 
   /**
-   * Loads data from the resource specified in the given {@link Dataset} argument.
+   * Create the indices from the resource specified in the given {@link Dataset#settings()} attribute.
    * 
    * @param dataset the {@link Dataset} specification
    * @throws IOException if an I/O error occurs while closing the {@link InputStream} for the
@@ -107,101 +108,103 @@ public class DatasetRule implements MethodRule {
    * @throws InterruptedException may occur while thread is sleeping, to give time to Elasticsearch
    *         to actually index the data that was sent.
    */
-  private void loadDataset(final Dataset dataset) throws IOException, InterruptedException {
-    if (dataset == null || dataset.location() == null || dataset.location().isEmpty()) {
+  private void createIndices(final Dataset dataset) throws IOException, InterruptedException {
+    if (dataset == null || dataset.settings() == null || dataset.settings().isEmpty()) {
       LOGGER.warn("Skipping dataset loading");
       return;
     }
-    LOGGER.info("Loading dataset using '{}'", dataset.location());
+    LOGGER.info("Configuring indices using '{}'", dataset.documents());
     try (
         final InputStream jsonStream =
-            Thread.currentThread().getContextClassLoader().getResourceAsStream(dataset.location());
+            Thread.currentThread().getContextClassLoader().getResourceAsStream(dataset.settings());
         final JsonReader jsonReader = Json.createReader(jsonStream);) {
       final JsonObject root = jsonReader.readObject();
-      // configure the 'indices'
-      createIndices(root);
-      // locate the 'documents' entry or throw an exception
-      loadDocuments(root);
+      if (root == null) {
+        LOGGER.info("No index settings found in the '{}' file.", dataset.settings());
+      } else {
+        root.entrySet().stream().forEach(indexEntry -> {
+          final String indexName = indexEntry.getKey();
+          // prepare the index creation
+          final CreateIndexRequest createIndexRequest = new CreateIndexRequest(indexName);
+          // update the index with the specific configuration
+          final JsonObject indexSettings = (JsonObject) indexEntry.getValue();
+          createIndexRequest.settings(indexSettings.toString());
+          // locate and parse the optional 'mappings' element
+          final JsonObject mappings = indexSettings.getJsonObject("mappings");
+          if (mappings == null) {
+            LOGGER.info("No 'mappings' entry found for index {} in dataset file.", indexName);
+          } else {
+            // include the type mappings in the index creation request
+            mappings.entrySet().forEach(typeMapping -> {
+              createIndexRequest.mapping(typeMapping.getKey(), typeMapping.getValue().toString());
+            });
+          }
+          // create the index with all the config
+          client.admin().indices().create(createIndexRequest).actionGet();
+          // wait for shards to be ready
+        });
+      }
     } finally {
-      LOGGER.info("Loading dataset done.");
+      LOGGER.info("Indices configuration done.");
 
     }
   }
-
+  
   /**
-   * Creates and configures the indices declared in the 'indices' element at the root of the
-   * dataset.
+   * Loads the documents from the resource specified in the given {@link Dataset#documents()} attribute.
    * 
-   * @param root the root {@link JsonObject}.
+   * @param dataset the {@link Dataset} specification
+   * @throws IOException if an I/O error occurs while closing the {@link InputStream} for the
+   *         dataset location.
+   * @throws InterruptedException may occur while thread is sleeping, to give time to Elasticsearch
+   *         to actually index the data that was sent.
    */
-  private void createIndices(final JsonObject root) {
-    final JsonObject indices = root.getJsonObject("indices");
-    if (indices == null) {
-      LOGGER.info("No 'indices' entry found in the dataset file.");
-    } else {
-      indices.entrySet().stream().forEach(indexEntry -> {
-        final String indexName = indexEntry.getKey();
-        // prepare the index creation
-        final CreateIndexRequest createIndexRequest = new CreateIndexRequest(indexName);
-        // update the index with the specific configuration
-        final JsonObject indexSettings = (JsonObject) indexEntry.getValue();
-        createIndexRequest.settings(indexSettings.toString());
-        // locate and parse the optional 'mappings' element
-        final JsonObject mappings = indexSettings.getJsonObject("mappings");
-        if (mappings == null) {
-          LOGGER.info("No 'mappings' entry found for index {} in dataset file.", indexName);
-        } else {
-          // include the type mappings in the index creation request
-          mappings.entrySet().forEach(typeMapping -> {
-            createIndexRequest.mapping(typeMapping.getKey(), typeMapping.getValue().toString());
-          });
-        }
-        // create the index with all the config
-        client.admin().indices().create(createIndexRequest).actionGet();
-        // wait for shards to be ready
-      });
-    }
-  }
-
-
-  /**
-   * Indexes all the documents declared in the 'documents' element at the root of the
-   * dataset.
-   * 
-   * @param root the root {@link JsonObject}.
-   */
-  private void loadDocuments(final JsonObject root) throws InterruptedException {
-    final JsonArray documents = root.getJsonArray("documents");
-    if(documents == null) {
-      LOGGER.info("No 'documents' array defined in the dataset.");
+  private void loadDocuments(final Dataset dataset) throws IOException, InterruptedException {
+    if (dataset == null || dataset.documents() == null || dataset.documents().isEmpty()) {
+      LOGGER.warn("Skipping dataset loading");
       return;
     }
-    documents.stream()
-        // convert each entry into a JsonObject
-        .map(doc -> (JsonObject) doc)
-        // for each 'document'
-        .forEach(doc -> {
-          // the index in which the document should be stored
-          final JsonArray documentIndices = getIndices(doc);
-          // the document to store
-          final JsonObject data = getDocumentData(doc);
-          // add the document into the indices
-          documentIndices.stream().map(index -> (JsonObject) index).forEach(index -> {
-            final String indexName = index.getString("indexName");
-            final String indexType = index.getString("indexType");
-            final String indexId = index.getString("indexId");
-            LOGGER.debug("Adding document at {}/{}/{}: {}", indexName, indexType, indexId, data);
-            final IndexResponse indexResponse = client.prepareIndex(indexName, indexType)
-                .setId(indexId).setSource(data).execute().actionGet();
-            Assertions.assertThat(indexResponse.isCreated()).isEqualTo(true);
-          });
-        });
-    // give Elasticsearch a bit of time to actually index all the data that was sent
-    if (!documents.isEmpty()) {
-      long docCount = 0L;
-      while ((docCount = countDocs()) < documents.size()) {
-        Thread.sleep(TimeUnit.SECONDS.toMillis(1));
+    LOGGER.info("Indexing documents using '{}'", dataset.documents());
+    try (
+        final InputStream jsonStream =
+        Thread.currentThread().getContextClassLoader().getResourceAsStream(dataset.documents());
+        final JsonReader jsonReader = Json.createReader(jsonStream);) {
+      final JsonObject root = jsonReader.readObject();
+      final JsonArray documents = root.getJsonArray("documents");
+      if (documents == null) {
+        LOGGER.info("No 'documents' array defined in the dataset.");
+        return;
       }
+      documents.stream()
+          // convert each entry into a JsonObject
+          .map(doc -> (JsonObject) doc)
+          // for each 'document'
+          .forEach(doc -> {
+            // the index in which the document should be stored
+            final JsonArray documentIndices = getIndices(doc);
+            // the document to store
+            final JsonObject data = getDocumentData(doc);
+            // add the document into the indices
+            documentIndices.stream().map(index -> (JsonObject) index).forEach(index -> {
+              final String indexName = index.getString("indexName");
+              final String indexType = index.getString("indexType");
+              final String indexId = index.getString("indexId");
+              LOGGER.debug("Adding document at {}/{}/{}: {}", indexName, indexType, indexId, data);
+              final IndexResponse indexResponse = client.prepareIndex(indexName, indexType)
+                  .setId(indexId).setSource(data).execute().actionGet();
+              Assertions.assertThat(indexResponse.isCreated()).isEqualTo(true);
+            });
+          });
+      // give Elasticsearch a bit of time to actually index all the data that was sent
+      if (!documents.isEmpty()) {
+        long docCount = 0L;
+        while ((docCount = countDocs()) < documents.size()) {
+          Thread.sleep(TimeUnit.SECONDS.toMillis(1));
+        }
+      }
+    } finally {
+      LOGGER.info("Loading dataset done.");
+      
     }
   }
 

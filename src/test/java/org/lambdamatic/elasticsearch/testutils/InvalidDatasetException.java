@@ -12,7 +12,7 @@
 package org.lambdamatic.elasticsearch.testutils;
 
 /**
- * 
+ * Exception thrown when a data set is invalid.
  */
 public class InvalidDatasetException extends RuntimeException {
 

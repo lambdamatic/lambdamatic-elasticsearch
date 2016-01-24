@@ -55,7 +55,7 @@ public class SearchSubscription implements Subscription {
   @Override
   public void request(final long n) {
     if (!this.cancelled.get()) {
-      LOGGER.debug("Executing query: {}", this.requestBuilder.toString());
+      LOGGER.debug("Executing query...");
       this.requestBuilder.execute(new ActionListener<SearchResponse>() {
 
         @Override

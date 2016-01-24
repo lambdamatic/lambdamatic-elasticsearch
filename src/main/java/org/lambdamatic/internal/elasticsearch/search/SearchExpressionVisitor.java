@@ -1,5 +1,5 @@
 
-package org.lambdamatic.internal.elasticsearch.reactivestreams;
+package org.lambdamatic.internal.elasticsearch.search;
 
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.index.query.BoolQueryBuilder;

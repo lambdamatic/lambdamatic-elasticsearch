@@ -6,22 +6,8 @@
  * Contributors: Red Hat - Initial Contribution
  *******************************************************************************/
 
-package com.sample;
-
-import org.lambdamatic.elasticsearch.annotations.DocumentField;
-import org.lambdamatic.elasticsearch.search.SearchableElement;
-import org.lambdamatic.internal.elasticsearch.QueryMetadata;
-
 /**
- * Generated.
+ * Internal classes for deal with {@link org.lambdamatic.elasticsearch.search.SearchExpression}.
  */
-// FIXME: this class MUST be generated
-public class QBlogPost implements QueryMetadata<BlogPost> {
 
-  @DocumentField(name = "title")
-  public Title title;
-  
-  public interface Title extends SearchableElement {
-    
-  }
-}
+package org.lambdamatic.internal.elasticsearch.search;

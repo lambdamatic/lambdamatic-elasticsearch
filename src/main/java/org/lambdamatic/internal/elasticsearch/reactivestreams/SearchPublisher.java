@@ -13,10 +13,8 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.QueryBuilder;
-import org.lambdamatic.analyzer.LambdaExpressionAnalyzer;
-import org.lambdamatic.analyzer.ast.node.LambdaExpression;
-import org.lambdamatic.analyzer.ast.node.SimpleStatement;
 import org.lambdamatic.elasticsearch.search.SearchExpression;
+import org.lambdamatic.internal.elasticsearch.search.QueryBuilderUtils;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
@@ -30,15 +28,17 @@ import org.slf4j.LoggerFactory;
  */
 public class SearchPublisher<QueryType> implements Publisher<SearchResponse> {
 
-  /** The usual Logger.*/
+  /** The usual Logger. */
   private static final Logger LOGGER = LoggerFactory.getLogger(SearchPublisher.class);
-  
+
   /**
    * The Elasticsearch {@link Client}.
    */
   private final Client client;
 
-  /** The name of the index in which the <code>SearchOperation</code> operation will be performed. */
+  /**
+   * The name of the index in which the <code>SearchOperation</code> operation will be performed.
+   */
   private final String indexName;
 
   /** The type of document to get. */
@@ -53,8 +53,8 @@ public class SearchPublisher<QueryType> implements Publisher<SearchResponse> {
    * Constructor.
    * 
    * @param client the Elasticsearch {@link Client}
-   * @param indexName the name of the index in which the <code>SearchOperation</code> operation will be
-   *        performed.
+   * @param indexName the name of the index in which the <code>SearchOperation</code> operation will
+   *        be performed.
    * @param type the type of document to get.
    * @param searchExpression the {@link SearchExpression} to submit to the ES cluter.
    */
@@ -68,16 +68,9 @@ public class SearchPublisher<QueryType> implements Publisher<SearchResponse> {
 
   @Override
   public void subscribe(final Subscriber<? super SearchResponse> subscriber) {
-    final LambdaExpression lambdaExpression = LambdaExpressionAnalyzer.getInstance().analyzeExpression(this.searchExpression);
-    LOGGER.debug("Preparing a SearchRequest based on {}", lambdaExpression);
-    final SearchRequestBuilder requestBuilder = this.client.prepareSearch(this.indexName).setTypes(this.type)
-        .setSearchType(SearchType.DFS_QUERY_THEN_FETCH);
-    // let's visit the LambdaExpression (an AST) to see how to prepare the search request...
-    final SearchExpressionVisitor searchExpressionVisitor = new SearchExpressionVisitor();
-    final SimpleStatement statement = (SimpleStatement) lambdaExpression.getBody().get(0);
-    statement.getExpression().accept(searchExpressionVisitor);
-    final QueryBuilder queryBuilder = searchExpressionVisitor.getQueryBuilder();
-    LOGGER.debug(" search query: {}", queryBuilder.toString());
+    final SearchRequestBuilder requestBuilder = this.client.prepareSearch(this.indexName)
+        .setTypes(this.type).setSearchType(SearchType.DFS_QUERY_THEN_FETCH);
+    final QueryBuilder queryBuilder = QueryBuilderUtils.from(this.searchExpression);
     requestBuilder.setQuery(queryBuilder);
     final SearchSubscription subscription = new SearchSubscription(subscriber, requestBuilder);
     subscriber.onSubscribe(subscription);

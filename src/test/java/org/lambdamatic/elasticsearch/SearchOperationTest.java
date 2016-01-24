@@ -56,7 +56,7 @@ public class SearchOperationTest extends ESSingleNodeTestCase {
     final CountDownLatch latch = new CountDownLatch(1);
 
     // when
-    blogPosts.search(p -> p.title.similar("post")).subscribe(new Subscriber<SearchResponse>() {
+    blogPosts.search(p -> p.title.similarTo("post")).subscribe(new Subscriber<SearchResponse>() {
 
       @Override
       public void onSubscribe(Subscription s) {

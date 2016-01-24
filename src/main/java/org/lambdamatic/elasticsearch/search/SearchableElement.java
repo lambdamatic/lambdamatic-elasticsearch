@@ -26,11 +26,11 @@ public interface SearchableElement {
   public MatchingElement matches(String word);
 
   /**
-   * <strong>fuzzy search</strong> on a term similar for the given <code>word</code>.
+   * <strong>fuzzy search</strong> on a term similar for the given <strong><code>word</code></strong>.
    * 
-   * @param word the work to match
+   * @param word the word to match
    * @return a boolean operand, in order to include this operation in a more complex expression.
    */
   @SearchOperation(EnumSearchType.FUZZY)
-  public boolean similar(String word);
+  public boolean similarTo(String word);
 }

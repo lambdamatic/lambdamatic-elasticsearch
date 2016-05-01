@@ -65,11 +65,11 @@ public class Converter {
    *         of the given {@code domainType} failed.
    */
   // FIXME: need to support type hierarchy
-  private static <DomainType> DomainType toDomainType(final Class<DomainType> domainType,
+  private static <D> D toDomainType(final Class<D> domainType,
       final Map<String, Object> documentSource) {
     try {
-      final Constructor<DomainType> domainTypeConstructor = domainType.getConstructor();
-      final DomainType domainObject = domainTypeConstructor.newInstance();
+      final Constructor<D> domainTypeConstructor = domainType.getConstructor();
+      final D domainObject = domainTypeConstructor.newInstance();
       final BeanInfo domainTypeInfo = Introspector.getBeanInfo(domainType);
       Stream.of(domainTypeInfo.getPropertyDescriptors())
           .forEach(propertyDescriptor -> setDomainObjectProperty(domainObject, propertyDescriptor,
@@ -188,7 +188,7 @@ public class Converter {
    * @throws ConversionException if setting the searchHit value on the domain type property failed.
    */
   @SuppressWarnings("unchecked")
-  private static <DomainType> void setDomainObjectProperty(final DomainType domainObject,
+  private static <D> void setDomainObjectProperty(final D domainObject,
       final PropertyDescriptor propertyDescriptor, final Map<String, Object> documentElements) {
     final Object documentElementValue = documentElements.get(propertyDescriptor.getName());
     try {
@@ -198,7 +198,10 @@ public class Converter {
           final Type targetType = ((ParameterizedType) domainObject.getClass()
               .getDeclaredField(propertyDescriptor.getName()).getGenericType())
                   .getActualTypeArguments()[0];
-          final Class<?> targetClass = Class.forName(targetType.getTypeName());
+          // casting to Class<D> fixes a compilation error on Travis-ci (running JDK 1.8_031) 
+          // but might have side-effects (ClassCastExceptions ?) when type inheritance will have to 
+          // be supported
+          final Class<D> targetClass = (Class<D>) Class.forName(targetType.getTypeName());
           final List<?> nestedElements = ((List<Map<String, Object>>) documentElementValue).stream()
               .map(element -> toDomainType(targetClass, element)).collect(Collectors.toList());
           propertyDescriptor.getWriteMethod().invoke(domainObject, nestedElements);

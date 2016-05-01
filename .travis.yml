@@ -1,4 +1,4 @@
-sudo: false
+sudo: true
 cache:
   directories:
   - $HOME/.m2
@@ -6,3 +6,10 @@ cache:
 language: java
 jdk:
   - oraclejdk8
+# workaround to specify custom Maven options to run the JUnit tests with Elasticsearch
+# see https://github.com/travis-ci/travis-ci/issues/1689
+before_script:
+  - export MAVEN_SKIP_RC="true"
+  - export MAVEN_OPTS="-ea"
+script:
+  - mvn test -B -Dtests.security.manager=false

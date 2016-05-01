@@ -46,10 +46,11 @@
 		<maven-compiler-plugin.version>3.3</maven-compiler-plugin.version>
 		<maven-surefire-plugin.version>2.18.1</maven-surefire-plugin.version>
 		<lambdamatic-analyzer.version>0.1.0-SNAPSHOT</lambdamatic-analyzer.version>
-		<elasticsearch.version>2.1.0</elasticsearch.version>
-		<lucene.version>5.3.1</lucene.version>
+		<elasticsearch.version>2.3.1</elasticsearch.version>
+		<lucene.version>5.5.0</lucene.version>
 		<commons-io.version>2.4</commons-io.version>
 		<mustachejava.version>0.9.1</mustachejava.version>
+		<jackson.version>2.6.3</jackson.version>
 		<junit.version>4.12</junit.version>
 		<assertj-core.version>3.2.0</assertj-core.version>
 		<slf4j-api.version>1.7.5</slf4j-api.version>
@@ -89,6 +90,16 @@
 			<artifactId>commons-io</artifactId>
 			<version>${commons-io.version}</version>
 		</dependency>
+		<!-- <dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>${jackson.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jdk8</artifactId>
+			<version>${jackson.version}</version>
+		</dependency> -->
 
 		<!-- Testing dependencies -->
 		<dependency>

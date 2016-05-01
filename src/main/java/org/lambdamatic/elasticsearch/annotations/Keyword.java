@@ -6,22 +6,20 @@
  * Contributors: Red Hat - Initial Contribution
  *******************************************************************************/
 
-package com.sample;
+package org.lambdamatic.elasticsearch.annotations;
 
-import org.lambdamatic.elasticsearch.annotations.DocumentField;
-import org.lambdamatic.elasticsearch.search.SearchableElement;
-import org.lambdamatic.internal.elasticsearch.QueryMetadata;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Generated.
+ * Annotation to specify that the document field of type {@link String} is an exact value, and can
+ * be used for filtering, sorting and aggregations.
+ * 
  */
-// FIXME: this class MUST be generated
-public class QBlogPost implements QueryMetadata<BlogPost> {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+public @interface Keyword {
 
-  @DocumentField(name = "title")
-  public Title title;
-  
-  public interface Title extends SearchableElement {
-    
-  }
 }

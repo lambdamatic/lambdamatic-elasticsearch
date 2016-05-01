@@ -6,7 +6,7 @@
  * Contributors: Red Hat - Initial Contribution
  *******************************************************************************/
 
-package org.lambdamatic.elasticsearch.search;
+package org.lambdamatic.elasticsearch.querydsl.types;
 
 import org.lambdamatic.internal.elasticsearch.SearchOperation;
 import org.lambdamatic.internal.elasticsearch.SearchOperation.EnumSearchType;
@@ -15,22 +15,22 @@ import org.lambdamatic.internal.elasticsearch.SearchOperation.EnumSearchType;
  * Interface designating elements that can be searched and exposing an API for all kind of searches
  * that can be performed on the field (fuzzy, range, etc.)
  */
-public interface SearchableElement {
+public interface FullTextField {
 
   /**
    * @param word the word to search
-   * @return a {@link MatchingElement} to allow for fine-grained configuration on the matching
-   *         element.
+   * @return a {@link Boostable} to optionally boost the result on the query clause.
    */
   @SearchOperation(EnumSearchType.MATCHES)
-  public MatchingElement matches(String word);
+  public Boostable matches(String word);
 
   /**
-   * <strong>fuzzy search</strong> on a term similar for the given <strong><code>word</code></strong>.
+   * <strong>fuzzy search</strong> on a term similar for the given
+   * <strong><code>word</code></strong>.
    * 
    * @param word the word to match
-   * @return a boolean operand, in order to include this operation in a more complex expression.
+   * @return a {@link Boostable} to optionally boost the result on the query clause.
    */
   @SearchOperation(EnumSearchType.FUZZY)
-  public boolean similarTo(String word);
+  public Boostable fuzzyMatches(String word);
 }

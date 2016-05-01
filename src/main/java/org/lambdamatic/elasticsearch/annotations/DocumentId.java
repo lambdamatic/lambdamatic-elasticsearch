@@ -6,31 +6,19 @@
  * Contributors: Red Hat - Initial Contribution
  *******************************************************************************/
 
-package com.sample;
+package org.lambdamatic.elasticsearch.annotations;
 
-import java.util.List;
-
-import org.lambdamatic.elasticsearch.annotations.Document;
-import org.lambdamatic.elasticsearch.annotations.DocumentField;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * A blog post.
+ * Defines the {@code _id} field in an Elasticsearch document. The document field is of type
+ * {@code string} in Elasticsearch.
  */
-@Document(indexName = "blog_index", type = "blogpost")
-public class BlogPost {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+public @interface DocumentId {
 
-  @DocumentField(id = true)
-  private Long id;
-
-  @DocumentField
-  private String title;
-
-  @DocumentField
-  private String body;
-
-  // @StringField
-  // private String[] tags;
-
-  // @StringField
-  // private List<Comment> comments;
 }

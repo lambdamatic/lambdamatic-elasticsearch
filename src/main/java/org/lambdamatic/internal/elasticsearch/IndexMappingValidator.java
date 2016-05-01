@@ -25,7 +25,6 @@ import org.elasticsearch.index.IndexNotFoundException;
  * Utility class to validate the mapping of a given Elasticsearch index with its associated domain
  * type.
  * 
- * @param the type of the domain class to use to validate the index mapping
  */
 public class IndexMappingValidator {
 
@@ -35,20 +34,24 @@ public class IndexMappingValidator {
   
   private final String indexName;
   
-  private final String type;
+  private final String typeName;
 
   private IndexValidationStatus indexStatus = null;
 
   /**
    * Constructor.
+   * @param client the underlying Elasticsearch {@link Client}.
+   * @param domainType the type of domain entity to map.
+   * @param indexName the name of the index in Elasticsearch.
+   * @param typeName the name of the type in the index.
    * 
    * @param elasticsearchIndex the associated class to manage data on the ES index.
    */
-  public IndexMappingValidator(final Client client, final Class<?> domainType, final String indexName, final String type) {
+  public IndexMappingValidator(final Client client, final Class<?> domainType, final String indexName, final String typeName) {
     this.client = client;
     this.domainType = domainType;
     this.indexName = indexName;
-    this.type = type;
+    this.typeName = typeName;
   }
 
   /**
@@ -91,7 +94,7 @@ public class IndexMappingValidator {
         MappingUtils.getClassMapping(this.domainType);
     CreateIndexAction.INSTANCE.newRequestBuilder(this.client)
         .setIndex(this.indexName)
-        .addMapping(this.type, mapping).get();
+        .addMapping(this.typeName, mapping).get();
     return IndexValidationStatus.OK;
   }
 
@@ -99,10 +102,12 @@ public class IndexMappingValidator {
    * Verifies that the mappings match the associated domain type.
    * 
    * @param mappings the mappings retrieved from the Elasticsearch index.
-   * @return
+   * @return the {@link IndexValidationStatus}
    */
+  @SuppressWarnings("static-method")
   private IndexValidationStatus verifyMappings(
       final ImmutableOpenMap<String, ImmutableOpenMap<String, MappingMetaData>> mappings) {
+    //TODO: implement code
     return IndexValidationStatus.OK;
   }
 }

@@ -9,7 +9,25 @@
         }
       ],
       "data":{
-        "title":"Blog post"
+        "title":"First blog post"
+      }
+    },
+    {
+      "indices":[
+        {
+          "indexName":"blog_index",
+          "indexType":"blogpost",
+          "indexId":"2"
+        }
+      ],
+      "data":{
+        "title":"Second blog post",
+        "comments": [
+          { "authorName":"Xavier",
+            "comment" : "Nice work!",
+            "stars": 5,
+            "date" : "2016-04-01"}
+        ]
       }
     }
   ]

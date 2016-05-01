@@ -1,0 +1,75 @@
+= TODO
+
+== Short-term issues:
+
+- project license + file headers required ?
+- serialize multiple statements in query clauses
+- understand and fix the analyzer problem on 'BlogPost.title' (no document matched the query)
+- support 'settings' object in json file
+- BlogPosts#get(String) -> synchronous and BlogPosts#get(String).onSuccess(Consumer<D>).onFailure(Consumer<Throwable) -> asynchronous   
+
+
+== Mapping
+
+=== Java entities / Elasticsearch documents
+
+Minimum annotation: @Document on the entity types.
+Specify the document id field with @DocumentId (document field name cannot be specified).
+Mandatory @DocumentField to specify the name of the field in the document (default: use the Java field name).
+
+Add @Binary, @IPv4, @GeoPoint, @GeoShape, @Nested and @TokenCount annotations for specific field types ? 
+Or just rely on the JSON Mapping ?
+
+How do we handle the case where an entity field is bound to multiple document fields (ie, as a Full text field for search and as a Keyword for filtering, sorting and aggregation) ?
+
+Add an @Version annotation to keep track of the document version and avoid collisions on updates
+
+Note: Annotation attributes are used to bind the Java entity fields to the Elasticsearch document fields. 
+Then, all fine-tuning of Elasticsearch document fields is configured in the JSON mapping files, in order to 
+keep the Java annotations as light-weight as possible.
+
+Use a tool like Forge to add Entity fields and update the JSON mapping at the same time ?
+
+=== Indices
+
+At start time, load mappings from /mappings and submit all JSON files available to create or update
+the indices with the user settings. This operation might fail if user settings are incompatible with
+the existing indices settings.
+
+Provide a tool to generate the base JSON Files ? A Maven plugin ?
+
+== Managing documents
+
+=== Indexing documents
+
+Make sure that the index mapping is created/updated during document insertion.
+
+=== Getting documents
+
+=== Getting documents
+
+=== Updating documents
+
+Make sure that the index mapping is created/updated during document update.
+Use the @Version annotated field to query the document ?
+
+=== Deleting
+
+
+
+== Querying documents with Lambda Expressions
+
+=== Query DSL
+
+=== Source filtering
+
+See https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-source-filtering.html
+
+=== From/Size
+
+
+=== Sorting
+
+== Reactive API
+
+

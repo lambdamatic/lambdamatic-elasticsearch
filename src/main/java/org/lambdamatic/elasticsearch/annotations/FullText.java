@@ -6,29 +6,20 @@
  * Contributors: Red Hat - Initial Contribution
  *******************************************************************************/
 
-package com.sample;
+package org.lambdamatic.elasticsearch.annotations;
 
-import java.util.Date;
-
-import org.lambdamatic.elasticsearch.annotations.DocumentField;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * A blog post comment.
+ * Annotation to specify that the document field of type {@link String} is analyzed before being
+ * indexed. This allows Elasticsearch to search for individual words within the field.
+ * 
  */
-public class Comment {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+public @interface FullText {
 
-  @DocumentField
-  private String name;
-
-  @DocumentField
-  private String comment;
-
-  @DocumentField
-  private int age;
-
-  @DocumentField
-  private int stars;
-
-  @DocumentField
-  private Date date;
 }

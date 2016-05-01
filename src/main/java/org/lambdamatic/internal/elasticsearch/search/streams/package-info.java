@@ -7,6 +7,7 @@
  *******************************************************************************/
 
 /**
- * Package for SearchOperation API.
+ * 
  */
-package org.lambdamatic.elasticsearch.search;
+
+package org.lambdamatic.internal.elasticsearch.search.streams;

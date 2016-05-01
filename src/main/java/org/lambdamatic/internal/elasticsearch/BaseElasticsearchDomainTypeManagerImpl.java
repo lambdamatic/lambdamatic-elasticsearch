@@ -8,27 +8,44 @@
 
 package org.lambdamatic.internal.elasticsearch;
 
-import org.elasticsearch.action.delete.DeleteResponse;
-import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.index.IndexResponse;
+import java.util.Iterator;
+import java.util.Objects;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.stream.Collector;
+import java.util.stream.StreamSupport;
+
+import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
 import org.lambdamatic.elasticsearch.ElasticsearchDomainTypeManager;
 import org.lambdamatic.elasticsearch.annotations.Document;
-import org.lambdamatic.elasticsearch.search.SearchExpression;
-import org.lambdamatic.internal.elasticsearch.reactivestreams.GetPublisher;
-import org.lambdamatic.internal.elasticsearch.reactivestreams.SearchPublisher;
-import org.reactivestreams.Publisher;
+import org.lambdamatic.elasticsearch.querydsl.Collectable;
+import org.lambdamatic.elasticsearch.querydsl.FilterContext;
+import org.lambdamatic.elasticsearch.querydsl.MustMatchContext;
+import org.lambdamatic.elasticsearch.querydsl.QueryExpression;
+import org.lambdamatic.internal.elasticsearch.search.QueryBuilderUtils;
+import org.lambdamatic.internal.elasticsearch.search.streams.Converter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The base implementation class for all generated entity managers.
  * 
- * @param <DomainType> the type of the domain document.
- * @param <QueryType> the query type associated with the domain document.
+ * @param <D> the type of the domain document.
+ * @param <Q> the query type associated with the domain document.
  * 
  */
-public abstract class BaseElasticsearchDomainTypeManagerImpl<DomainType, QueryType extends QueryMetadata<DomainType>>
-    implements ElasticsearchDomainTypeManager<DomainType, QueryType> {
+public abstract class BaseElasticsearchDomainTypeManagerImpl<D, Q extends QueryMetadata<D>>
+    implements ElasticsearchDomainTypeManager<D, Q> {
+
+  /** The usual Logger. */
+  private static final Logger LOGGER = LoggerFactory.getLogger(BaseElasticsearchDomainTypeManagerImpl.class);
 
   /**
    * the underlying {@link Client} to connect to the Elasticsearch cluster.
@@ -36,7 +53,7 @@ public abstract class BaseElasticsearchDomainTypeManagerImpl<DomainType, QueryTy
   private final Client client;
 
   /** The domain type associated with this index. */
-  private final Class<DomainType> domainType;
+  private final Class<D> domainType;
 
   /** Name of the index in Elasticsearch. */
   private final String indexName;
@@ -46,13 +63,22 @@ public abstract class BaseElasticsearchDomainTypeManagerImpl<DomainType, QueryTy
 
   private final IndexMappingValidator mappingValidator;
 
+  /** The expression to use to <strong>match (SHOULD)</strong> documents. */
+  private QueryExpression<Q> shouldMatchExpression;
+
+  /** The expression to use to <strong>match (MUST)</strong> documents. */
+  private QueryExpression<Q> mustMatchExpression;
+  
+  /** The expression to use to <strong>filter</strong> documents. */
+  private QueryExpression<Q> filterExpression;
+  
   /**
    * Constructor.
    * 
    * @param client The underlying {@link Client} to connect to the Elasticsearch cluster
    * @param domainType The domain type associated with this index
    */
-  public BaseElasticsearchDomainTypeManagerImpl(final Client client, final Class<DomainType> domainType) {
+  public BaseElasticsearchDomainTypeManagerImpl(final Client client, final Class<D> domainType) {
     this.client = client;
     this.domainType = domainType;
     final Document documentAnnotation = domainType.getAnnotation(Document.class);
@@ -60,7 +86,7 @@ public abstract class BaseElasticsearchDomainTypeManagerImpl<DomainType, QueryTy
       throw new IllegalStateException("Class '" + domainType.getName() + "' is missing the '"
           + Document.class.getName() + "' annotation.");
     }
-    this.indexName = documentAnnotation.indexName();
+    this.indexName = documentAnnotation.index();
     this.type = documentAnnotation.type();
     this.mappingValidator = new IndexMappingValidator(this.client, this.domainType, this.indexName, this.type);
   }
@@ -75,7 +101,7 @@ public abstract class BaseElasticsearchDomainTypeManagerImpl<DomainType, QueryTy
   /**
    * @return the associated Domain type.
    */
-  public Class<DomainType> getDomainType() {
+  public Class<D> getDomainType() {
     return this.domainType;
   }
 
@@ -98,24 +124,48 @@ public abstract class BaseElasticsearchDomainTypeManagerImpl<DomainType, QueryTy
   }
 
   @Override
-  public Publisher<IndexResponse> index(final DomainType document) {
-    return null;
+  public MustMatchContext<D, Q> shouldMatch(final QueryExpression<Q> filterExpression) {
+    this.shouldMatchExpression = Objects.requireNonNull(filterExpression);
+    return this;
   }
 
   @Override
-  public Publisher<GetResponse> get(final String documentId) {
-    return new GetPublisher(this.client, this.indexName, this.type, documentId);
+  public FilterContext<D, Q> mustMatch(final QueryExpression<Q> filterExpression) {
+    this.mustMatchExpression = Objects.requireNonNull(filterExpression);
+    return this;
   }
-
+  
   @Override
-  public Publisher<DeleteResponse> delete(final Object documentId) {
-    // TODO Auto-generated method stub
-    return null;
+  public Collectable<D, Q> filter(final QueryExpression<Q> filterExpression) {
+    this.filterExpression = Objects.requireNonNull(filterExpression);
+    return this;
   }
-
+  
   @Override
-  public Publisher<SearchResponse> search(final SearchExpression<QueryType> expression) {
-    return new SearchPublisher<>(this.client, this.indexName, this.type, expression);
+  public <R, A> R collect(final Collector<? super D, A, R> collector) {
+    LOGGER.debug("Executing query...");
+    final SearchRequestBuilder requestBuilder = this.client.prepareSearch(this.indexName)
+        .setTypes(this.type);
+    
+    final BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
+    if (this.shouldMatchExpression != null) {
+      queryBuilder.should(QueryBuilderUtils.from(this.shouldMatchExpression));
+    }
+    if (this.mustMatchExpression != null) {
+      queryBuilder.must(QueryBuilderUtils.from(this.mustMatchExpression));
+    }
+    if (this.filterExpression != null) {
+      queryBuilder.filter(QueryBuilderUtils.from(this.filterExpression));
+    }
+    requestBuilder.setQuery(queryBuilder);
+    LOGGER.debug("Query: {}", requestBuilder.toString());
+    final SearchResponse response = requestBuilder.execute().actionGet();
+    LOGGER.trace("Query response: {}", response);
+    final Iterator<SearchHit> iterator = response.getHits().iterator();
+    final Spliterator<SearchHit> spliterator =
+        Spliterators.spliteratorUnknownSize(iterator, Spliterator.IMMUTABLE);
+    return StreamSupport.stream(spliterator, false)
+        .map(searchHit -> Converter.toDomainType(this.domainType, searchHit.getId(), searchHit.sourceAsMap())
+        ).collect(collector);
   }
-
 }

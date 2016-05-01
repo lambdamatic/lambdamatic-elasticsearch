@@ -7,7 +7,7 @@
  *******************************************************************************/
 
 /**
- * Internal classes for deal with {@link org.lambdamatic.elasticsearch.search.SearchExpression}.
+ * Internal classes for deal with {@link org.lambdamatic.elasticsearch.querydsl.QueryExpression}.
  */
 
 package org.lambdamatic.internal.elasticsearch.search;

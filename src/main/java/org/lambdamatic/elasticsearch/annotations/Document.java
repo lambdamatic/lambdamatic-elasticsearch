@@ -24,11 +24,9 @@ import java.lang.annotation.Target;
 public @interface Document {
 
   /** the name of the index to use. */
-  public String indexName();
+  public String index();
 
-  /** the type under which the document is indexed. */
+  /** the name of the type under which the document is indexed. */
   public String type();
   
-  /** flag to indicate if the <quote>_all</quote> field should be added in the index. */
-  public boolean includeInAllField() default true;
 }

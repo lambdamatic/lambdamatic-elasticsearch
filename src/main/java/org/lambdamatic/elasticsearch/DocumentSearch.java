@@ -9,26 +9,18 @@
  *     Red Hat - Initial Contribution
  *******************************************************************************/
 
-package org.lambdamatic.elasticsearch.search;
+package org.lambdamatic.elasticsearch;
 
-import java.util.List;
+import org.lambdamatic.elasticsearch.querydsl.ShouldMatchContext;
+import org.lambdamatic.internal.elasticsearch.QueryMetadata;
 
 /**
- * The result of a SearchOperation.
- * @param <DomainType> the associated type of Document being searched
+ * Interface for document search.
  * 
+ * @param <D> the type of documents stored in the associated index.
+ * @param <Q> the {@link QueryMetadata} type associated with the type of documents.
  */
-public interface SearchResult<DomainType> {
-  
-  /**
-   * @return the total number of matches on a queried index.
-   */
-  public long getTotalCount();
-  
-  
-  /**
-   * @return the {@link List} of matching documents.
-   */
-  public List<DomainType> getDocuments();
+public interface DocumentSearch<D, Q> extends ShouldMatchContext<D, Q> {
 
+  
 }

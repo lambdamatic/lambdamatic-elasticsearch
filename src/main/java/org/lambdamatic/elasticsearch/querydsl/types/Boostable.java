@@ -9,17 +9,16 @@
  *     Red Hat - Initial Contribution
  *******************************************************************************/
 
-package org.lambdamatic.elasticsearch.search;
+package org.lambdamatic.elasticsearch.querydsl.types;
 
 /**
- * SearchOperation parameters that can be applied on a matching element.
+ * Operand to boost the result.
  */
-public interface MatchingElement {
-  
-  
+public interface Boostable {
+
   /**
-   * Boost the result on the given matching element. 
+   * Boosts the result on the given field.
    * @param factor the boost factor
    */
-  public void boost(int factor);
+  public void boost(float factor);
 }

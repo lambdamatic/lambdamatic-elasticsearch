@@ -9,27 +9,24 @@
 package org.lambdamatic.elasticsearch;
 
 import java.io.IOException;
-import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.time.LocalDate;
+import java.time.Month;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.assertj.core.api.Assertions;
-import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.test.ESSingleNodeTestCase;
 import org.junit.Rule;
 import org.junit.Test;
 import org.lambdamatic.elasticsearch.testutils.Dataset;
 import org.lambdamatic.elasticsearch.testutils.DatasetRule;
-import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.sample.BlogPosts;
+import com.sample.blog.BlogPost;
+import com.sample.blog.BlogPosts;
+import com.sample.blog.Comment;
 
 /**
  * Testing the Reactive Streams implementation for the <code>SEARCH</code> operation on a single
@@ -39,52 +36,106 @@ public class SearchOperationTest extends ESSingleNodeTestCase {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SearchOperationTest.class);
 
-  private static final String BLOGPOST_INDEX_NAME = "blog_index";
-
-  private static final String BLOGPOST_TYPE = "blogpost";
-
   @Rule
   public DatasetRule datasetRule = new DatasetRule(client());
 
+  private BlogPost firstBlogPost() {
+    final BlogPost firstBlogPost = new BlogPost();
+    firstBlogPost.setId(1L);
+    firstBlogPost.setTitle("First blog post");
+    return firstBlogPost;
+  }
+
+  private BlogPost secondBlogPost() {
+    final BlogPost secondBlogPost = new BlogPost();
+    secondBlogPost.setId(2L);
+    secondBlogPost.setTitle("Second blog post");
+    secondBlogPost.setComments(
+        Arrays.asList(new Comment("Xavier", "Nice work!", 5, LocalDate.of(2016, Month.APRIL, 1))));
+    return secondBlogPost;
+  }
 
   @Test
   @Dataset(settings = "settings.json", documents = "blogposts.json")
-  public void shouldFindSingleDocument() throws IOException, InterruptedException {
+  public void filterSingleDocumentByTitle() throws IOException, InterruptedException {
     // given
     final BlogPosts blogPosts = new BlogPosts(client());
-    final Queue<SearchResponse> queue = new ArrayBlockingQueue<>(1);
-    final CountDownLatch latch = new CountDownLatch(1);
-
     // when
-    blogPosts.search(p -> p.title.similarTo("post")).subscribe(new Subscriber<SearchResponse>() {
-
-      @Override
-      public void onSubscribe(Subscription s) {
-        s.request(1);
-      }
-
-      @Override
-      public void onNext(SearchResponse response) {
-        queue.add(response);
-        LOGGER.info(response.toString());
-      }
-
-      @Override
-      public void onError(Throwable t) {
-        Assertions.fail("Failed to retrieve next element", t);
-        latch.countDown();
-      }
-
-      @Override
-      public void onComplete() {
-        latch.countDown();
-      }
-
-    });
+    final List<BlogPost> result =
+        blogPosts.filter(p -> p.title.fuzzyMatches("post")).collect(Collectors.toList());
     // then
-    latch.await();
-    Assertions.assertThat(queue.size()).isEqualTo(1);
-    final SearchResponse response = queue.poll();
-    Assertions.assertThat(response.getHits().getTotalHits()).isEqualTo(1);
+    Assertions.assertThat(result.size()).isEqualTo(2);
+    Assertions.assertThat(result).contains(firstBlogPost(), secondBlogPost());
   }
+
+  @Test
+  @Dataset(settings = "settings.json", documents = "blogposts.json")
+  public void shouldMatchSingleDocumentByComment() throws IOException, InterruptedException {
+    // given
+    final BlogPosts blogPosts = new BlogPosts(client());
+    // when
+    final List<BlogPost> result =
+        blogPosts.shouldMatch(p -> p.comments.comment.matches("nice")).collect(Collectors.toList());
+    // then
+    Assertions.assertThat(result.size()).isEqualTo(1);
+    Assertions.assertThat(result).contains(secondBlogPost());
+  }
+
+  @Test
+  @Dataset(settings = "settings.json", documents = "blogposts.json")
+  public void mustMatchSingleDocumentByComment() throws IOException, InterruptedException {
+    // given
+    final BlogPosts blogPosts = new BlogPosts(client());
+    // when
+    final List<BlogPost> result =
+        blogPosts.mustMatch(p -> p.comments.comment.matches("nice")).collect(Collectors.toList());
+    // then
+    Assertions.assertThat(result.size()).isEqualTo(1);
+    Assertions.assertThat(result).contains(secondBlogPost());
+  }
+
+  @Test
+  @Dataset(settings = "settings.json", documents = "blogposts.json")
+  public void filterSingleDocumentByComment() throws IOException, InterruptedException {
+    // given
+    final BlogPosts blogPosts = new BlogPosts(client());
+    // when
+    final List<BlogPost> result =
+        blogPosts.filter(p -> p.comments.comment.matches("nice")).collect(Collectors.toList());
+    // then
+    Assertions.assertThat(result.size()).isEqualTo(1);
+    Assertions.assertThat(result).contains(secondBlogPost());
+  }
+
+  @Test
+  @Dataset(settings = "settings.json", documents = "blogposts.json")
+  public void queryAndFilterSingleDocument() throws IOException, InterruptedException {
+    // given
+    final BlogPosts blogPosts = new BlogPosts(client());
+    // when
+    final List<BlogPost> result = blogPosts.shouldMatch(p -> p.title.fuzzyMatches("second")) 
+        .filter(p -> p.comments.comment.matches("nice")).collect(Collectors.toList());
+    // then
+    Assertions.assertThat(result.size()).isEqualTo(1);
+    Assertions.assertThat(result).contains(secondBlogPost());
+  }
+
+  @Test
+  @Dataset(settings = "settings.json", documents = "blogposts.json")
+  public void queryAndFilterAllDocument() throws IOException, InterruptedException {
+    // given
+    final BlogPosts blogPosts = new BlogPosts(client());
+    // when
+    final List<BlogPost> result = blogPosts
+        //.shouldMatch(p -> p.title.fuzzyMatches("second")) 
+        .filter(p -> p.title.matches("post"))
+        .collect(Collectors.toList());
+    // then
+    Assertions.assertThat(result.size()).isEqualTo(2);
+    Assertions.assertThat(result).contains(firstBlogPost());
+    Assertions.assertThat(result).contains(secondBlogPost());
+  }
+
+
+
 }

@@ -10,18 +10,24 @@ import org.lambdamatic.analyzer.ast.node.Expression;
 import org.lambdamatic.analyzer.ast.node.ExpressionVisitor;
 import org.lambdamatic.analyzer.ast.node.FieldAccess;
 import org.lambdamatic.analyzer.ast.node.MethodInvocation;
+import org.lambdamatic.analyzer.ast.node.Expression.ExpressionType;
 import org.lambdamatic.elasticsearch.annotations.DocumentField;
 import org.lambdamatic.elasticsearch.exceptions.ConversionException;
-import org.lambdamatic.elasticsearch.search.SearchExpression;
+import org.lambdamatic.elasticsearch.querydsl.QueryExpression;
 import org.lambdamatic.internal.elasticsearch.SearchOperation;
 import org.lambdamatic.internal.elasticsearch.SearchOperation.EnumSearchType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * An {@link ExpressionVisitor} for a {@link SearchExpression} that will prepare the
+ * An {@link ExpressionVisitor} for a {@link QueryExpression} that will prepare the
  * {@link SearchRequest}.
  */
-public class SearchExpressionVisitor extends ExpressionVisitor {
+public class QueryExpressionVisitor extends ExpressionVisitor {
 
+  /** The usual Logger.*/
+  private static final Logger LOGGER = LoggerFactory.getLogger(QueryExpressionVisitor.class);
+  
   private QueryBuilder queryBuilder;
 
   @Override
@@ -36,7 +42,7 @@ public class SearchExpressionVisitor extends ExpressionVisitor {
         break;
     }
     for (Expression operand : expr.getOperands()) {
-      final SearchExpressionVisitor operandVisitor = new SearchExpressionVisitor();
+      final QueryExpressionVisitor operandVisitor = new QueryExpressionVisitor();
       operand.accept(operandVisitor);
       boolQueryBuilder.must(operandVisitor.getQueryBuilder());
     }
@@ -56,23 +62,19 @@ public class SearchExpressionVisitor extends ExpressionVisitor {
         this.queryBuilder = QueryBuilders.fuzzyQuery(fieldName, value);
         break;
       case MATCHES:
-        break;
-      case PROXIMITY:
-        break;
-      case RANGE:
+        this.queryBuilder = QueryBuilders.matchQuery(fieldName, value);
         break;
       default:
-        break;
-
+        throw new ConversionException("Unsupported search type: " + searchType);
     }
     return false;
   }
 
   /**
    * Retrieves the {@link DocumentField#name()} from the given {@link FieldAccess} in a
-   * {@link SearchExpression}.
+   * {@link QueryExpression}. If the field is nested into another domain object, the full path is retrieved.
    * 
-   * @param field the {@link FieldAccess} in the {@link SearchExpression}
+   * @param field the {@link FieldAccess} in the {@link QueryExpression}
    * @return the name of the field in the Elasticsearch/Lucene document.
    */
   private static String getDocumentFieldName(final FieldAccess field) {
@@ -80,6 +82,9 @@ public class SearchExpressionVisitor extends ExpressionVisitor {
     try {
       final String fieldName =
           sourceType.getField(field.getFieldName()).getAnnotation(DocumentField.class).name();
+      if(field.getSource().getExpressionType() == ExpressionType.FIELD_ACCESS) {
+        return getDocumentFieldName((FieldAccess) field.getSource()) + "." + fieldName;
+      }
       return fieldName;
     } catch (NoSuchFieldException e) {
       throw new ConversionException("Failed to retrieve field named '" + field.getFieldName()
@@ -88,7 +93,7 @@ public class SearchExpressionVisitor extends ExpressionVisitor {
   }
 
   /**
-   * @return the {@link QueryBuilder} corresponding to the {@link SearchExpression} that was
+   * @return the {@link QueryBuilder} corresponding to the {@link QueryExpression} that was
    *         visited.
    */
   public QueryBuilder getQueryBuilder() {

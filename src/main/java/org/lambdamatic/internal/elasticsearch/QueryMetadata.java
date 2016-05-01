@@ -7,11 +7,15 @@
 package org.lambdamatic.internal.elasticsearch;
 
 /**
- * Marker interface for generated metadata classes used to express filters in queries.
+ * Marker interface for generated metadata classes used to express query clauses.
  * 
- * @param <DomainType> the actual domain type being queried.
+ * @param <D> the actual domain type being queried.
  *
  */
-public interface QueryMetadata<DomainType> {
+//FIXME: do we need to split the QueryMetadata into FilterContextMetadata vs QueryContextMetadata and thus
+// generate different classes for a domain type, in order to restrict the comparisons that can be expressed ?
+// EG: can we _use_ the 'match' in a FILTER context ? 
+
+public interface QueryMetadata<D> {
   // empty marker interface
 }

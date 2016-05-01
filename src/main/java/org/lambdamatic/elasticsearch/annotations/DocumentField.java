@@ -14,42 +14,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Defines the Elasticsearch field in a document.
+ * Defines the mapping between a Java field and a document field in Elasticsearch.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface DocumentField {
 
   /**
-   * Name of the field in the stored document. If unspecified, the {@link DocumentField} name is
-   * used.
+   * Name of the field in the document. If unspecified, the name of the annotated Java field
+   * is used.
    */
   public String name() default "";
 
-  /**
-   * Flag to indicate if the annotated {@link DocumentField} is the document id.
-   */
-  public boolean id() default false;
-
-  /**
-   * Flag to indicate if the annotated {@link DocumentField} is stored in the index.
-   */
-  public boolean stored() default false;
-
-  /**
-   * Flag to indicate if this field should be part of the <quote>_all</quote> field of this parent
-   * document.
-   */
-  public boolean includeInAllField() default true;
-
-  /**
-   * The copy_to parameter allows you to create custom <code>_all</code> fields. In other words, the
-   * values of multiple fields can be copied into a group field, which can then be queried as a
-   * single field.
-   * 
-   * See
-   * <a href="https://www.elastic.co/guide/en/elasticsearch/reference/2.1/copy-to.html">copy_to</a>
-   * in Elasticsearch docs.
-   */
-  public String copyTo() default "";
 }

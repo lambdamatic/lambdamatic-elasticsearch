@@ -12,18 +12,21 @@ import static org.assertj.core.api.Assertions.fail;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import java.util.stream.Collector;
 import java.util.stream.Stream;
 
 import javax.json.Json;
 import javax.json.JsonArray;
+import javax.json.JsonNumber;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
+import javax.json.JsonString;
 import javax.json.JsonValue;
 
 import org.assertj.core.api.Assertions;
@@ -32,18 +35,13 @@ import org.elasticsearch.action.admin.cluster.stats.ClusterStatsResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
-import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.IndicesAdminClient;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.index.shard.DocsStats;
 import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
+import org.lambdamatic.elasticsearch.exceptions.ConversionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,7 +98,8 @@ public class DatasetRule implements MethodRule {
   }
 
   /**
-   * Create the indices from the resource specified in the given {@link Dataset#settings()} attribute.
+   * Create the indices from the resource specified in the given {@link Dataset#settings()}
+   * attribute.
    * 
    * @param dataset the {@link Dataset} specification
    * @throws IOException if an I/O error occurs while closing the {@link InputStream} for the
@@ -128,7 +127,12 @@ public class DatasetRule implements MethodRule {
           final CreateIndexRequest createIndexRequest = new CreateIndexRequest(indexName);
           // update the index with the specific configuration
           final JsonObject indexSettings = (JsonObject) indexEntry.getValue();
-          createIndexRequest.settings(indexSettings.toString());
+          final JsonObject settings = indexSettings.getJsonObject("settings");
+          if (settings == null) {
+            LOGGER.info("No 'settings' entry found for index {} in dataset file.", indexName);
+          } else {
+            createIndexRequest.settings(settings.toString());
+          }
           // locate and parse the optional 'mappings' element
           final JsonObject mappings = indexSettings.getJsonObject("mappings");
           if (mappings == null) {
@@ -146,12 +150,12 @@ public class DatasetRule implements MethodRule {
       }
     } finally {
       LOGGER.info("Indices configuration done.");
-
     }
   }
-  
+
   /**
-   * Loads the documents from the resource specified in the given {@link Dataset#documents()} attribute.
+   * Loads the documents from the resource specified in the given {@link Dataset#documents()}
+   * attribute.
    * 
    * @param dataset the {@link Dataset} specification
    * @throws IOException if an I/O error occurs while closing the {@link InputStream} for the
@@ -161,13 +165,14 @@ public class DatasetRule implements MethodRule {
    */
   private void loadDocuments(final Dataset dataset) throws IOException, InterruptedException {
     if (dataset == null || dataset.documents() == null || dataset.documents().isEmpty()) {
-      LOGGER.warn("Skipping dataset loading");
+      LOGGER.warn(
+          "Skipping dataset loading - Test method has no @Dataset annotation or @Dataset#documents is null or empty.");
       return;
     }
     LOGGER.info("Indexing documents using '{}'", dataset.documents());
     try (
         final InputStream jsonStream =
-        Thread.currentThread().getContextClassLoader().getResourceAsStream(dataset.documents());
+            Thread.currentThread().getContextClassLoader().getResourceAsStream(dataset.documents());
         final JsonReader jsonReader = Json.createReader(jsonStream);) {
       final JsonObject root = jsonReader.readObject();
       final JsonArray documents = root.getJsonArray("documents");
@@ -183,7 +188,7 @@ public class DatasetRule implements MethodRule {
             // the index in which the document should be stored
             final JsonArray documentIndices = getIndices(doc);
             // the document to store
-            final JsonObject data = getDocumentData(doc);
+            final Map<String, ?> data = getDocumentData(doc);
             // add the document into the indices
             documentIndices.stream().map(index -> (JsonObject) index).forEach(index -> {
               final String indexName = index.getString("indexName");
@@ -196,6 +201,7 @@ public class DatasetRule implements MethodRule {
             });
           });
       // give Elasticsearch a bit of time to actually index all the data that was sent
+      // (should be 1s or less)
       if (!documents.isEmpty()) {
         long docCount = 0L;
         while ((docCount = countDocs()) < documents.size()) {
@@ -204,7 +210,7 @@ public class DatasetRule implements MethodRule {
       }
     } finally {
       LOGGER.info("Loading dataset done.");
-      
+
     }
   }
 
@@ -242,13 +248,68 @@ public class DatasetRule implements MethodRule {
    * @return the <code>data</code> entry value as a {@link JsonObject}
    * @throws InvalidDatasetException if no entry named <code>data</code> could be found.
    */
-  private JsonObject getDocumentData(final JsonObject doc) {
+  private Map<String, ?> getDocumentData(final JsonObject doc) {
     final Entry<String, JsonValue> dataEntry =
         doc.entrySet().stream().filter(entry -> entry.getKey().equals("data")).findFirst()
             .orElseThrow(() -> new InvalidDatasetException(
                 "Dataset did not contain an 'data' entry in the document JSON object."));
     final JsonObject data = (JsonObject) dataEntry.getValue();
-    return data;
+    return toMap(data);
+  }
+
+  private static Map<String, ?> toMap(final JsonObject jsonObject) {
+    return jsonObject.entrySet().stream().collect(DatasetRule.toMapCollector());
+  }
+
+  private static Collector<Map.Entry<String, JsonValue>, ?, Map<String, Object>> toMapCollector() {
+    return Collector.of(HashMap::new,
+        (resultMap, entry) -> resultMap.put(entry.getKey(), valueOf(entry.getValue())),
+        DatasetRule::merge);
+  }
+
+  private static Object valueOf(final JsonValue value) {
+    switch (value.getValueType()) {
+      case FALSE:
+        return false;
+      case NULL:
+        return null;
+      case STRING:
+        return ((JsonString) value).getString();
+      case TRUE:
+        return true;
+      case ARRAY:
+        final JsonArray jsonArray = ((JsonArray) value);
+        final List<Object> result = new ArrayList<>();
+        jsonArray.iterator().forEachRemaining(item -> result.add(valueOf(item)));
+        return result;
+      case OBJECT:
+        return toMap((JsonObject) value);
+      case NUMBER:
+        final JsonNumber number = (JsonNumber) value;
+        if (number.isIntegral()) {
+          return number.longValue(); // or other methods to get integral value
+        } else {
+          return number.doubleValue(); // or other methods to get decimal number value
+        }
+      default:
+        throw new ConversionException(
+            "Unexpected Json value of type '" + value.getValueType().name() + "'");
+    }
+  }
+
+  /**
+   * Merges the given {@code left} and {@code right} maps into a single, new {@link Map}.
+   * 
+   * @param left the left {@link Map} to merge
+   * @param right the right {@link Map} to merge
+   * @return the combination of {@code left} and {@code right} maps.
+   */
+  static Map<String, Object> merge(final Map<String, Object> left,
+      final Map<String, Object> right) {
+    final Map<String, Object> retVal = new HashMap<>();
+    left.keySet().stream().forEach((key) -> retVal.put(key, left.get(key)));
+    right.keySet().stream().forEach((key) -> retVal.put(key, right.get(key)));
+    return retVal;
   }
 
 }

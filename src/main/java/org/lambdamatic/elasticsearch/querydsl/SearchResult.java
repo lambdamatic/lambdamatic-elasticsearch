@@ -9,20 +9,26 @@
  *     Red Hat - Initial Contribution
  *******************************************************************************/
 
-package org.lambdamatic.elasticsearch.annotations.analyzers;
+package org.lambdamatic.elasticsearch.querydsl;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.util.List;
 
 /**
- * Meta-annotation for field analyzers.
+ * The result of a SearchOperation.
+ * @param <D> the associated type of Document being searched
+ * 
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface Analyzer {
+public interface SearchResult<D> {
+  
+  /**
+   * @return the total number of matches on a queried index.
+   */
+  public long getTotalCount();
+  
+  
+  /**
+   * @return the {@link List} of matching documents.
+   */
+  public List<D> getDocuments();
 
-  /** the name of the analyzer. */
-  public String value();
 }

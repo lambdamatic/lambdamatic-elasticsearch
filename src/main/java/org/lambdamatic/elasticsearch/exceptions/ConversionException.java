@@ -2,12 +2,12 @@
 package org.lambdamatic.elasticsearch.exceptions;
 
 import org.apache.lucene.search.Query;
-import org.lambdamatic.elasticsearch.search.SearchExpression;
+import org.lambdamatic.elasticsearch.querydsl.QueryExpression;
 
 /**
  * {@link ConversionException} are thrown when conversion of a Java domain instance into an Lucene
  * document fails, or when an Elasticsearch/Lucene {@link Query} fails to be built from a
- * {@link SearchExpression}.
+ * {@link QueryExpression}.
  * 
  * @author Xavier Coulon
  *

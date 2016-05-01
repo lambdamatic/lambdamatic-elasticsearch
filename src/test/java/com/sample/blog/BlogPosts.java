@@ -9,17 +9,18 @@
  *     Red Hat - Initial Contribution
  *******************************************************************************/
 
-package org.lambdamatic.elasticsearch.search;
+package com.sample.blog;
 
-import org.lambdamatic.SerializablePredicate;
+import org.elasticsearch.client.Client;
+import org.lambdamatic.internal.elasticsearch.BaseElasticsearchDomainTypeManagerImpl;
 
 /**
- * A {@link SearchExpression} which specifies which {@code DomainType} should be part of the
- * search operation.
- * @param <DomainType>
- * 
+ * Manager for the {@link BlogPost} entities stored in Elasticsearch.
  */
-@FunctionalInterface
-public interface SearchExpression<DomainType> extends SerializablePredicate<DomainType> {
-  //this predicate interface has no extra method.
+public class BlogPosts extends BaseElasticsearchDomainTypeManagerImpl<BlogPost, QBlogPost> {
+
+  public BlogPosts(final Client client) {
+    super(client, BlogPost.class);
+  }
+  
 }

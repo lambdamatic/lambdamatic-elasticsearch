@@ -9,18 +9,19 @@
  *     Red Hat - Initial Contribution
  *******************************************************************************/
 
-package com.sample;
+package org.lambdamatic.elasticsearch.querydsl;
 
-import org.elasticsearch.client.Client;
-import org.lambdamatic.internal.elasticsearch.BaseElasticsearchDomainTypeManagerImpl;
+import java.util.function.Consumer;
 
 /**
- * Manager for the {@link BlogPost} entities stored in Elasticsearch.
+ * 
  */
-public class BlogPosts extends BaseElasticsearchDomainTypeManagerImpl<BlogPost, QBlogPost> {
+public interface Iterable<T> {
 
-  public BlogPosts(final Client client) {
-    super(client, BlogPost.class);
-  }
+  /**
+   * Performs an action for each search result of this stream.
+   *
+   */
+  void forEach(Consumer<? super T> action);
   
 }

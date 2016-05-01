@@ -9,7 +9,10 @@
 package org.lambdamatic.internal.elasticsearch;
 
 import java.lang.reflect.Field;
-import java.util.Date;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.time.LocalDate;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +21,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.lambdamatic.elasticsearch.annotations.DocumentField;
+import org.lambdamatic.elasticsearch.annotations.DocumentId;
 
 /**
  * Utility class for domain class mapping in an Elasticsearch index.
@@ -43,35 +47,30 @@ public interface MappingUtils {
 
 
   /**
-   * Analyze the given domain type and returns the name of the Lucene document field to use as the
-   * document id, if available.
+   * Analyze the given domain type and returns the name of its field to use as the document id, if
+   * available.
    * 
    * @param domainType the domain type to analyze
-   * @return the value of {@link DocumentField#name()} is present or the actual {@link Field} name
-   *         if there is a single Field annotated with {@link DocumentField} whose
-   *         {@link DocumentField#id()} value is set to <code>true</code>. If no field matches the
-   *         criteria, <code>null</code> is returned. If more than one field is matches these
-   *         criteria, a {@link MappingException} is thrown.
+   * @return the name of the single Java field annotated with {@link DocumentId}. If no field
+   *         matches the criteria, <code>null</code> is returned. If more than one field is matches
+   *         these criteria, a {@link MappingException} is thrown.
    */
   public static String getIdFieldName(Class<?> domainType) {
-    final List<ImmutablePair<Field, DocumentField>> candidateFields =
+    final List<ImmutablePair<Field, DocumentId>> candidateFields =
         Stream.of(domainType.getDeclaredFields())
-            .map(field -> ImmutablePair.of(field, field.getAnnotation(DocumentField.class)))
-            .filter(pair -> pair.right != null && pair.right.id()).collect(Collectors.toList());
+            .map(field -> ImmutablePair.of(field, field.getAnnotation(DocumentId.class)))
+            .filter(pair -> pair.right != null).collect(Collectors.toList());
     if (candidateFields.isEmpty()) {
       return null;
     } else if (candidateFields.size() > 1) {
       final String fieldNames = candidateFields.stream().map(pair -> pair.left.getName())
           .collect(Collectors.joining(", "));
       throw new MappingException(
-          "More than one field is annotated with '@StringField(id=true)': {}", fieldNames);
+          "More than one field is annotated with '@'" + DocumentId.class.getName() + ": {}",
+          fieldNames);
     }
     final Field domainField = candidateFields.get(0).left;
-    final DocumentField domainFieldAnnotation = candidateFields.get(0).right;
-    if (domainFieldAnnotation.name() == null || domainFieldAnnotation.name().isEmpty()) {
-      return domainField.getName();
-    }
-    return domainFieldAnnotation.name();
+    return domainField.getName();
   }
 
 
@@ -87,6 +86,13 @@ public interface MappingUtils {
     final Map<String, Object> mapping = new HashMap<>();
     final String luceneFieldType = getLuceneFieldType(field.getType());
     mapping.put("type", luceneFieldType);
+    if (luceneFieldType.equals("object")) {
+      final Type fieldGenericType = field.getGenericType();
+      final Class<?> parameterType =
+          (Class<?>) ((ParameterizedType) fieldGenericType).getActualTypeArguments()[0];
+      final Map<String, Object> fieldProperties = getClassMapping(parameterType);
+      mapping.put("properties", fieldProperties.get("properties"));
+    }
     return mapping;
   }
 
@@ -121,10 +127,14 @@ public interface MappingUtils {
       return "float";
     } else if (fieldType == Double.class || fieldType == double.class) {
       return "double";
-    } else if (fieldType == Date.class) {
+    } else if (fieldType == LocalDate.class) {
       return "date";
     } else if (fieldType == String.class) {
       return "string";
+    } else if (fieldType.isArray()) {
+      return getLuceneFieldType(fieldType.getComponentType());
+    } else if (Collection.class.isAssignableFrom(fieldType)) {
+      return "object";
     }
     throw new MappingException("Unable to retrieve the Lucene field type for " + fieldType);
   }

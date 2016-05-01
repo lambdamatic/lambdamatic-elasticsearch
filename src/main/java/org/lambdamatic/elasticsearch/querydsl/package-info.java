@@ -7,6 +7,6 @@
  *******************************************************************************/
 
 /**
- * Package for annotations related to field indexing/analyzing.
+ * Package for SearchOperation API.
  */
-package org.lambdamatic.elasticsearch.annotations.analyzers;
+package org.lambdamatic.elasticsearch.querydsl;

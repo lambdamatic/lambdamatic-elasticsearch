@@ -10,7 +10,9 @@ package org.lambdamatic.internal.elasticsearch.search;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -30,12 +32,23 @@ import com.sample.blog.QBlogPost;
 @RunWith(Parameterized.class)
 public class QueryBuilderUtilsTest {
 
+  /**
+   * @return the test data.
+   */
   @Parameters(name = "{index}")
   public static Collection<Object[]> generateData() {
     return new ParametersBuilder<QueryExpression<QBlogPost>>()
-        .add(b -> b.title.fuzzyMatches("blog"), QueryBuilders.fuzzyQuery("title", "blog"))
+        .add(b -> b.title.fuzzyMatches("blog"), 
+            Arrays.asList(QueryBuilders.fuzzyQuery("title", "blog")))
+        .add(b -> b.title.fuzzyMatches("blog").boost(1.5f),
+            Arrays.asList(QueryBuilders.fuzzyQuery("title", "blog").boost(1.5f)))
         .add(b -> b.comments.comment.fuzzyMatches("nice"),
-            QueryBuilders.fuzzyQuery("comments.comment", "nice"))
+            Arrays.asList(QueryBuilders.fuzzyQuery("comments.comment", "nice")))
+        .add(b -> {
+            b.title.fuzzyMatches("blog").boost(1.5f);
+            b.comments.comment.fuzzyMatches("nice"); }, 
+            Arrays.asList(QueryBuilders.fuzzyQuery("title", "blog").boost(1.5f),
+              QueryBuilders.fuzzyQuery("comments.comment", "nice")))
         .get();
   }
 
@@ -43,15 +56,15 @@ public class QueryBuilderUtilsTest {
   public QueryExpression<QBlogPost> searchExpression;
 
   @Parameter(value = 1)
-  public QueryBuilder expectation;
+  public List<QueryBuilder> expectation;
 
 
   @Test
   public void shouldBuildQueryFromSearchExpression() {
     // when
-    final QueryBuilder result = QueryBuilderUtils.from(searchExpression);
+    final List<QueryBuilder> result = QueryBuilderUtils.from(searchExpression);
     // then
-    assertThat(result.toString()).isNotNull().isEqualTo(expectation.toString());
+    assertThat(result.toString()).isEqualTo(expectation.toString());
   }
 
 }

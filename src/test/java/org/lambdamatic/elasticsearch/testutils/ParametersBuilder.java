@@ -26,8 +26,9 @@ public class ParametersBuilder<T> {
   private final List<Object[]> dataset = new ArrayList<>();
   
   /**
-   * Adds the given array of objects in the dataset
-   * @param data the data
+   * Adds the given array of objects in the dataset.
+   * @param firstItem the first item
+   * @param otherItems the other items
    * @return the current instance of {@link ParametersBuilder} 
    */
   public ParametersBuilder<T> add(final T firstItem, Object...otherItems) {
@@ -37,7 +38,7 @@ public class ParametersBuilder<T> {
   }
   
   /**
-   * Merges the first item with all others in a single, new array
+   * Merges the first item with all others in a single, new array.
    * @param firstItem the first item
    * @param otherItems the other items
    * @return the single, resulting array

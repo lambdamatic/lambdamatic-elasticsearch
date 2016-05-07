@@ -13,7 +13,7 @@
   </appender>
 
   <logger name="org.lambdamatic" level="TRACE" />
-  <logger name="org.lambdamatic.analyzer" level="INFO" />
+  <logger name="org.lambdamatic.analyzer" level="TRACE" />
   <logger name="bootstrap" level="DEBUG" />
   <logger name="cluster.metadata" level="DEBUG" />
 

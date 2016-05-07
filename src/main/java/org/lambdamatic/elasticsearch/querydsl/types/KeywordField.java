@@ -8,8 +8,8 @@
 
 package org.lambdamatic.elasticsearch.querydsl.types;
 
-import org.lambdamatic.internal.elasticsearch.SearchOperation;
-import org.lambdamatic.internal.elasticsearch.SearchOperation.EnumSearchType;
+import org.lambdamatic.internal.elasticsearch.QueryClauseType;
+import org.lambdamatic.internal.elasticsearch.QueryClauseType.EnumQueryClauseType;
 
 /**
  * Interface designating elements that can be searched and exposing an API for all kind of searches
@@ -21,7 +21,7 @@ public interface KeywordField {
    * @param word the word to search
    * @return a {@link Boostable} to optionally boost the result on the query clause.
    */
-  @SearchOperation(EnumSearchType.TERM)
+  @QueryClauseType(EnumQueryClauseType.TERM)
   public Boostable hasExactTerm(String word);
 
   

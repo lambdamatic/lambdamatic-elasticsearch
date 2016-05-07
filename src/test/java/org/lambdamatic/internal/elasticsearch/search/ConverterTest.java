@@ -23,7 +23,7 @@ import com.sample.blog.BlogPost;
 import com.sample.blog.Comment;
 
 /**
- * Testing the {@link Converter} utility class
+ * Testing the {@link Converter} utility class.
  */
 public class ConverterTest {
 

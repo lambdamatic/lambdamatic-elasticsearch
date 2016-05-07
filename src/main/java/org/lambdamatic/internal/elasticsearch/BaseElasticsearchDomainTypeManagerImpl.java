@@ -17,10 +17,8 @@ import java.util.stream.StreamSupport;
 
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.lambdamatic.elasticsearch.ElasticsearchDomainTypeManager;
@@ -149,13 +147,13 @@ public abstract class BaseElasticsearchDomainTypeManagerImpl<D, Q extends QueryM
     
     final BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
     if (this.shouldMatchExpression != null) {
-      queryBuilder.should(QueryBuilderUtils.from(this.shouldMatchExpression));
+      QueryBuilderUtils.from(this.shouldMatchExpression).stream().forEach(queryBuilder::should);
     }
     if (this.mustMatchExpression != null) {
-      queryBuilder.must(QueryBuilderUtils.from(this.mustMatchExpression));
+      QueryBuilderUtils.from(this.mustMatchExpression).stream().forEach(queryBuilder::must);
     }
     if (this.filterExpression != null) {
-      queryBuilder.filter(QueryBuilderUtils.from(this.filterExpression));
+      QueryBuilderUtils.from(this.filterExpression).stream().forEach(queryBuilder::filter);
     }
     requestBuilder.setQuery(queryBuilder);
     LOGGER.debug("Query: {}", requestBuilder.toString());

@@ -68,12 +68,12 @@ public class SearchPublisher<Q> implements Publisher<SearchResponse> {
 
   @Override
   public void subscribe(final Subscriber<? super SearchResponse> subscriber) {
-    final SearchRequestBuilder requestBuilder = this.client.prepareSearch(this.indexName)
-        .setTypes(this.type).setSearchType(SearchType.DFS_QUERY_THEN_FETCH);
-    final QueryBuilder queryBuilder = QueryBuilderUtils.from(this.searchExpression);
-    requestBuilder.setQuery(queryBuilder);
-    final SearchSubscription subscription = new SearchSubscription(subscriber, requestBuilder);
-    subscriber.onSubscribe(subscription);
+//    final SearchRequestBuilder requestBuilder = this.client.prepareSearch(this.indexName)
+//        .setTypes(this.type).setSearchType(SearchType.DFS_QUERY_THEN_FETCH);
+//    final QueryBuilder queryBuilder = QueryBuilderUtils.from(this.searchExpression);
+//    requestBuilder.setQuery(queryBuilder);
+//    final SearchSubscription subscription = new SearchSubscription(subscriber, requestBuilder);
+//    subscriber.onSubscribe(subscription);
   }
 
 }

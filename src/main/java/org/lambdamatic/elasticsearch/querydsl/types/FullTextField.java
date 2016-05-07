@@ -8,8 +8,8 @@
 
 package org.lambdamatic.elasticsearch.querydsl.types;
 
-import org.lambdamatic.internal.elasticsearch.SearchOperation;
-import org.lambdamatic.internal.elasticsearch.SearchOperation.EnumSearchType;
+import org.lambdamatic.internal.elasticsearch.QueryClauseType;
+import org.lambdamatic.internal.elasticsearch.QueryClauseType.EnumQueryClauseType;
 
 /**
  * Interface designating elements that can be searched and exposing an API for all kind of searches
@@ -21,7 +21,7 @@ public interface FullTextField {
    * @param word the word to search
    * @return a {@link Boostable} to optionally boost the result on the query clause.
    */
-  @SearchOperation(EnumSearchType.MATCHES)
+  @QueryClauseType(EnumQueryClauseType.MATCHES)
   public Boostable matches(String word);
 
   /**
@@ -31,6 +31,6 @@ public interface FullTextField {
    * @param word the word to match
    * @return a {@link Boostable} to optionally boost the result on the query clause.
    */
-  @SearchOperation(EnumSearchType.FUZZY)
+  @QueryClauseType(EnumQueryClauseType.FUZZY)
   public Boostable fuzzyMatches(String word);
 }

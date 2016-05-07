@@ -20,12 +20,12 @@ import org.lambdamatic.elasticsearch.querydsl.types.FullTextField;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface SearchOperation {
+public @interface QueryClauseType {
   
   /**
-   * The type of search.
+   * The type of query clause.
    */
-  public enum EnumSearchType {
+  public enum EnumQueryClauseType {
     /** Fuzzy search. */
     FUZZY, 
     /** Proximity search. */
@@ -39,5 +39,5 @@ public @interface SearchOperation {
   }
 
   /** the type of search. */
-  public EnumSearchType value();
+  public EnumQueryClauseType value();
 }

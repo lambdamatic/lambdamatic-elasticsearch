@@ -19,9 +19,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.lambdamatic.elasticsearch.annotations.DocumentField;
 import org.lambdamatic.elasticsearch.annotations.DocumentId;
+import org.lambdamatic.elasticsearch.utils.Pair;
 
 /**
  * Utility class for domain class mapping in an Elasticsearch index.
@@ -56,20 +56,20 @@ public interface MappingUtils {
    *         these criteria, a {@link MappingException} is thrown.
    */
   public static String getIdFieldName(Class<?> domainType) {
-    final List<ImmutablePair<Field, DocumentId>> candidateFields =
+    final List<Pair<Field, DocumentId>> candidateFields =
         Stream.of(domainType.getDeclaredFields())
-            .map(field -> ImmutablePair.of(field, field.getAnnotation(DocumentId.class)))
-            .filter(pair -> pair.right != null).collect(Collectors.toList());
+            .map(field -> new Pair<>(field, field.getAnnotation(DocumentId.class)))
+            .filter(pair -> pair.getRight() != null).collect(Collectors.toList());
     if (candidateFields.isEmpty()) {
       return null;
     } else if (candidateFields.size() > 1) {
-      final String fieldNames = candidateFields.stream().map(pair -> pair.left.getName())
+      final String fieldNames = candidateFields.stream().map(pair -> pair.getLeft().getName())
           .collect(Collectors.joining(", "));
       throw new MappingException(
           "More than one field is annotated with '@'" + DocumentId.class.getName() + ": {}",
           fieldNames);
     }
-    final Field domainField = candidateFields.get(0).left;
+    final Field domainField = candidateFields.get(0).getLeft();
     return domainField.getName();
   }
 

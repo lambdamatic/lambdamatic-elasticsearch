@@ -12,9 +12,11 @@ import java.util.Iterator;
 import java.util.Objects;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.function.Consumer;
 import java.util.stream.Collector;
 import java.util.stream.StreamSupport;
 
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
@@ -27,8 +29,11 @@ import org.lambdamatic.elasticsearch.querydsl.Collectable;
 import org.lambdamatic.elasticsearch.querydsl.FilterContext;
 import org.lambdamatic.elasticsearch.querydsl.MustMatchContext;
 import org.lambdamatic.elasticsearch.querydsl.QueryExpression;
+import org.lambdamatic.internal.elasticsearch.reactivestreams.GetPublisher;
 import org.lambdamatic.internal.elasticsearch.search.QueryBuilderUtils;
 import org.lambdamatic.internal.elasticsearch.search.streams.Converter;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +48,8 @@ public abstract class BaseElasticsearchDomainTypeManagerImpl<D, Q extends QueryM
     implements ElasticsearchDomainTypeManager<D, Q> {
 
   /** The usual Logger. */
-  private static final Logger LOGGER = LoggerFactory.getLogger(BaseElasticsearchDomainTypeManagerImpl.class);
+  private static final Logger LOGGER =
+      LoggerFactory.getLogger(BaseElasticsearchDomainTypeManagerImpl.class);
 
   /**
    * the underlying {@link Client} to connect to the Elasticsearch cluster.
@@ -66,10 +72,10 @@ public abstract class BaseElasticsearchDomainTypeManagerImpl<D, Q extends QueryM
 
   /** The expression to use to <strong>match (MUST)</strong> documents. */
   private QueryExpression<Q> mustMatchExpression;
-  
+
   /** The expression to use to <strong>filter</strong> documents. */
   private QueryExpression<Q> filterExpression;
-  
+
   /**
    * Constructor.
    * 
@@ -86,7 +92,8 @@ public abstract class BaseElasticsearchDomainTypeManagerImpl<D, Q extends QueryM
     }
     this.indexName = documentAnnotation.index();
     this.type = documentAnnotation.type();
-    this.mappingValidator = new IndexMappingValidator(this.client, this.domainType, this.indexName, this.type);
+    this.mappingValidator =
+        new IndexMappingValidator(this.client, this.domainType, this.indexName, this.type);
   }
 
   /**
@@ -122,29 +129,68 @@ public abstract class BaseElasticsearchDomainTypeManagerImpl<D, Q extends QueryM
   }
 
   @Override
-  public MustMatchContext<D, Q> shouldMatch(final QueryExpression<Q> filterExpression) {
-    this.shouldMatchExpression = Objects.requireNonNull(filterExpression);
+  public D get(final String documentId) {
+    final GetResponse getResponse =
+        this.client.prepareGet(this.indexName, this.type, documentId).get();
+    return Converter.toDomainType(this.domainType, getResponse.getId(), getResponse.getSource());
+  }
+
+  @Override
+  public void asyncGet(final String documentId, Consumer<D> onSuccess,
+      Consumer<Throwable> onError) {
+    final GetPublisher publisher = new GetPublisher(this.client, this.indexName, this.type, documentId);
+    publisher.subscribe(new Subscriber<GetResponse>() {
+
+      @Override
+      public void onSubscribe(final Subscription s) {
+        s.request(1);
+      }
+
+      @Override
+      public void onNext(final GetResponse t) {
+        final D document = Converter.toDomainType(domainType, t.getId(), t.getSource());
+        onSuccess.accept(document);
+      }
+
+      @Override
+      public void onError(Throwable t) {
+        onError.accept(t);
+      }
+
+      @Override
+      public void onComplete() {
+        // do nothing, we are only collecting a single element.
+      }
+      });
+  }
+
+  @Override
+  public MustMatchContext<D, Q> shouldMatch(final QueryExpression<Q> shouldMatchExpression) {
+    this.shouldMatchExpression =
+        Objects.requireNonNull(shouldMatchExpression, "ShouldMatch expression must not be null");
     return this;
   }
 
   @Override
-  public FilterContext<D, Q> mustMatch(final QueryExpression<Q> filterExpression) {
-    this.mustMatchExpression = Objects.requireNonNull(filterExpression);
+  public FilterContext<D, Q> mustMatch(final QueryExpression<Q> mustMatchExpression) {
+    this.mustMatchExpression =
+        Objects.requireNonNull(mustMatchExpression, "MustMatch expression must not be null");
     return this;
   }
-  
+
   @Override
   public Collectable<D, Q> filter(final QueryExpression<Q> filterExpression) {
-    this.filterExpression = Objects.requireNonNull(filterExpression);
+    this.filterExpression =
+        Objects.requireNonNull(filterExpression, "Filter expression must not be null");
     return this;
   }
-  
+
   @Override
   public <R, A> R collect(final Collector<? super D, A, R> collector) {
     LOGGER.debug("Executing query...");
-    final SearchRequestBuilder requestBuilder = this.client.prepareSearch(this.indexName)
-        .setTypes(this.type);
-    
+    final SearchRequestBuilder requestBuilder =
+        this.client.prepareSearch(this.indexName).setTypes(this.type);
+
     final BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
     if (this.shouldMatchExpression != null) {
       QueryBuilderUtils.from(this.shouldMatchExpression).stream().forEach(queryBuilder::should);
@@ -162,8 +208,9 @@ public abstract class BaseElasticsearchDomainTypeManagerImpl<D, Q extends QueryM
     final Iterator<SearchHit> iterator = response.getHits().iterator();
     final Spliterator<SearchHit> spliterator =
         Spliterators.spliteratorUnknownSize(iterator, Spliterator.IMMUTABLE);
-    return StreamSupport.stream(spliterator, false)
-        .map(searchHit -> Converter.toDomainType(this.domainType, searchHit.getId(), searchHit.sourceAsMap())
-        ).collect(collector);
+    return StreamSupport.stream(spliterator, false).map(searchHit -> Converter
+        .toDomainType(this.domainType, searchHit.getId(), searchHit.sourceAsMap()))
+        .collect(collector);
   }
+
 }

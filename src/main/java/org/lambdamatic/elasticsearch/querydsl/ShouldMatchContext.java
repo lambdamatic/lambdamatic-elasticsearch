@@ -27,6 +27,6 @@ public interface ShouldMatchContext<D, Q> extends MustMatchContext<D, Q> {
    *         "https://github.com/reactive-streams/reactive-streams-jvm/blob/v1.0.0/README.md">
    *         Reactive Streams</a> {@link Publisher} for the domain-type specific search result.
    */
-  public Collectable<D, Q> shouldMatch(QueryExpression<Q> expression);
+  public MustMatchContext<D, Q> shouldMatch(QueryExpression<Q> expression);
   
 }

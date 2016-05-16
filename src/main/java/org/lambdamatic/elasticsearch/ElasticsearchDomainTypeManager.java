@@ -18,7 +18,7 @@ import org.lambdamatic.internal.elasticsearch.QueryMetadata;
  */
 public interface ElasticsearchDomainTypeManager<D, Q extends QueryMetadata<D>>
     extends 
-    //DocumentManagement<D>, 
+    DocumentManagement<D>, 
     DocumentSearch<D, Q> {
 
   // nothing more here.

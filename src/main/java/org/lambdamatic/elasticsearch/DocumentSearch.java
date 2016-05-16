@@ -11,6 +11,8 @@
 
 package org.lambdamatic.elasticsearch;
 
+import org.lambdamatic.elasticsearch.querydsl.FilterContext;
+import org.lambdamatic.elasticsearch.querydsl.MustMatchContext;
 import org.lambdamatic.elasticsearch.querydsl.ShouldMatchContext;
 import org.lambdamatic.internal.elasticsearch.QueryMetadata;
 
@@ -20,7 +22,7 @@ import org.lambdamatic.internal.elasticsearch.QueryMetadata;
  * @param <D> the type of documents stored in the associated index.
  * @param <Q> the {@link QueryMetadata} type associated with the type of documents.
  */
-public interface DocumentSearch<D, Q> extends ShouldMatchContext<D, Q> {
+public interface DocumentSearch<D, Q> extends ShouldMatchContext<D, Q>, MustMatchContext<D, Q>, FilterContext<D, Q> {
 
   
 }

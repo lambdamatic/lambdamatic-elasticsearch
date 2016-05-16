@@ -24,11 +24,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.lambdamatic.elasticsearch.testutils.Dataset;
 import org.lambdamatic.elasticsearch.testutils.DatasetRule;
-import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sample.blog.BlogPost;
 import com.sample.blog.BlogPosts;
 
 /**
@@ -40,7 +39,7 @@ public class GetOperationTest extends ESSingleNodeTestCase {
   private static final Logger LOGGER = LoggerFactory.getLogger(GetOperationTest.class);
 
   private static final String BLOGPOST_INDEX_NAME = "blog_index";
-  
+
   private static final String BLOGPOST_TYPE = "blogpost";
 
   private XContentBuilder source(String id, String nameValue) throws IOException {
@@ -54,47 +53,36 @@ public class GetOperationTest extends ESSingleNodeTestCase {
 
   @Test
   @Dataset(documents = "blogposts.json")
-  @Ignore
   public void shouldGetSingleDocument() throws IOException, InterruptedException {
     // given
     final BlogPosts blogPosts = new BlogPosts(client());
-    final Queue<GetResponse> queue = new ArrayBlockingQueue<>(1);
-    final CountDownLatch latch = new CountDownLatch(1);
-
     // when
-    // TODO: API needs to be simplified by wrapping the subscriber methods into a 'Result' type
-//    blogPosts.get("1").subscribe(new Subscriber<GetResponse>() {
-//
-//      @Override
-//      public void onSubscribe(Subscription s) {
-//        // this method should be called without user/explicit action
-//        s.request(1);
-//      }
-//
-//      @Override
-//      public void onNext(GetResponse response) {
-//        queue.add(response);
-//        LOGGER.info(response.toString());
-//      }
-//
-//      @Override
-//      public void onError(Throwable t) {
-//        // the given 'throwable' could be processed by a Lambda function
-//        Assertions.fail("Failed to retrieve element", t);
-//      }
-//
-//      @Override
-//      public void onComplete() {
-//        // the result could be returned in a lambda consumer
-//        latch.countDown();
-//      }
-//      
-//    });
+    final BlogPost result = blogPosts.get("1");
+    // then
+    Assertions.assertThat(result.getId()).isEqualTo(1L);
+    Assertions.assertThat(result.getTitle()).isEqualTo("First blog post");
+  }
+
+  @Test
+  @Dataset(documents = "blogposts.json")
+  public void shouldGetSingleDocumentAsync() throws IOException, InterruptedException {
+    // given
+    final BlogPosts blogPosts = new BlogPosts(client());
+    final Queue<BlogPost> queue = new ArrayBlockingQueue<>(1);
+    final CountDownLatch latch = new CountDownLatch(1);
+    // when
+    blogPosts.asyncGet("1", d -> {
+      queue.add(d);
+      latch.countDown();
+    }, t -> {
+      t.printStackTrace();
+      latch.countDown();
+    });
     // then
     latch.await(1, TimeUnit.SECONDS);
     Assertions.assertThat(queue.size()).isEqualTo(1);
-    final GetResponse response = queue.poll();
-    Assertions.assertThat(response.getId()).isEqualTo("1");
-    Assertions.assertThat(response.getField("title").getValue()).isEqualTo("First blog post");
+    final BlogPost result = queue.poll();
+    Assertions.assertThat(result.getId()).isEqualTo(1L);
+    Assertions.assertThat(result.getTitle()).isEqualTo("First blog post");
   }
 }

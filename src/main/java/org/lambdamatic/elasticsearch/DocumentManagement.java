@@ -11,11 +11,7 @@
 
 package org.lambdamatic.elasticsearch;
 
-import org.elasticsearch.action.delete.DeleteResponse;
-import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.index.IndexResponse;
-import org.elasticsearch.client.Client;
-import org.reactivestreams.Publisher;
+import java.util.function.Consumer;
 
 /**
  * Interface for all operations related to document management.
@@ -33,20 +29,27 @@ public interface DocumentManagement<D> {
    *         underlying {@link Client}.
    * TODO: return a simpler type to handle the response. 
    */
-  public Publisher<IndexResponse> index(D document);
+  //public Publisher<IndexResponse> index(D document);
 
   /**
-   * The gets the document identified by the given {@code id} from the index.
+   * The gets the document identified by the given {@code documentId} from the index.
    * 
    * @param documentId the id of the document to get
-   * @return A <a href=
-   *         "https://github.com/reactive-streams/reactive-streams-jvm/blob/v1.0.0/README.md">
-   *         Reactive Streams</a> {@link Publisher} for the {@link GetResponse} returned by the
-   *         underlying {@link Client}.
-   * TODO: return a simpler type to handle the response. 
+   * @return the instance of document whose id matches the given {@code documentId},
+   *         <code>null</code> if no document was found. 
    */
-  public Publisher<GetResponse> get(String documentId);
+  public D get(String documentId);
 
+  /**
+   * The gets the document identified by the given {@code documentId} from the index.
+   * 
+   * @param documentId the id of the document to get
+   * @param onSuccess the handler to call when the operation succeeds
+   * @param onError the handler to call if the operation failed 
+   * 
+   */
+  public void asyncGet(String documentId, Consumer<D> onSuccess, Consumer<Throwable> onError);
+  
   /**
    * The delete API allows one to delete a typed JSON document from a specific index based on its
    * id.
@@ -59,7 +62,7 @@ public interface DocumentManagement<D> {
    *         underlying {@link Client}.
    * TODO: return a simpler type to handle the response. 
    */
-  public Publisher<DeleteResponse> delete(Object documentId);
+  //public Publisher<DeleteResponse> delete(Object documentId);
 
   
 }

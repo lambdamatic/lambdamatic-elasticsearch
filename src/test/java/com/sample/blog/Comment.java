@@ -9,13 +9,14 @@
 package com.sample.blog;
 
 import java.time.LocalDate;
-import java.util.Date;
 
 import org.lambdamatic.elasticsearch.annotations.DocumentField;
+import org.lambdamatic.elasticsearch.annotations.EmbeddedDocument;
 
 /**
  * A blog post comment.
  */
+@EmbeddedDocument
 public class Comment {
 
   @DocumentField
@@ -39,10 +40,10 @@ public class Comment {
   
   /**
    * Full constructor.
-   * @param authorName
-   * @param comment
-   * @param stars
-   * @param date
+   * @param authorName the comment author
+   * @param comment the comment content
+   * @param stars the number of stars given to the parent {@link Blogpost}
+   * @param date the date of the comment
    */
   public Comment(String authorName, String comment, int stars, LocalDate date) {
     this.authorName = authorName;

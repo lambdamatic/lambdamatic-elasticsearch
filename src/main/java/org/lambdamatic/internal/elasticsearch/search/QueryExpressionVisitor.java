@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 public class QueryExpressionVisitor extends ExpressionVisitor {
 
   /** The usual Logger. */
+  @SuppressWarnings("unused")
   private static final Logger LOGGER = LoggerFactory.getLogger(QueryExpressionVisitor.class);
 
   private QueryBuilder queryBuilder;

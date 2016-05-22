@@ -1,17 +1,14 @@
 
 package org.lambdamatic.elasticsearch.exceptions;
 
-import org.apache.lucene.search.Query;
-import org.lambdamatic.elasticsearch.querydsl.QueryExpression;
-
 /**
- * {@link ConversionException} are thrown when an Elasticsearch/Lucene {@link Query} fails to be
- * built from a {@link QueryExpression}.
+ * {@link CodecException} are thrown when conversion of a Java domain instance into an Elasticsearch/Lucene
+ * document fails.
  * 
  * @author Xavier Coulon
  *
  */
-public class ConversionException extends RuntimeException {
+public class CodecException extends RuntimeException {
 
   /** serialVersionUID. */
   private static final long serialVersionUID = 7216008533037657142L;
@@ -21,7 +18,7 @@ public class ConversionException extends RuntimeException {
    * 
    * @param message the exception message
    */
-  public ConversionException(final String message) {
+  public CodecException(final String message) {
     super(message);
   }
 
@@ -31,7 +28,7 @@ public class ConversionException extends RuntimeException {
    * @param message the contextual message
    * @param cause the underlying cause
    */
-  public ConversionException(final String message, final Exception cause) {
+  public CodecException(final String message, final Exception cause) {
     super(message, cause);
   }
 

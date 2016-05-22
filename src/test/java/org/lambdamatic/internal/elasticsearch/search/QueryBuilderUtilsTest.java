@@ -24,7 +24,7 @@ import org.junit.runners.Parameterized.Parameters;
 import org.lambdamatic.elasticsearch.querydsl.QueryExpression;
 import org.lambdamatic.elasticsearch.testutils.ParametersBuilder;
 
-import com.sample.blog.QBlogPost;
+import com.sample.blog.QBlogpost;
 
 /**
  * Testing the {@link QueryBuilderUtils} class.
@@ -37,7 +37,7 @@ public class QueryBuilderUtilsTest {
    */
   @Parameters(name = "{index}")
   public static Collection<Object[]> generateData() {
-    return new ParametersBuilder<QueryExpression<QBlogPost>>()
+    return new ParametersBuilder<QueryExpression<QBlogpost>>()
         .add(b -> b.title.fuzzyMatches("blog"), 
             Arrays.asList(QueryBuilders.fuzzyQuery("title", "blog")))
         .add(b -> b.title.fuzzyMatches("blog").boost(1.5f),
@@ -53,7 +53,7 @@ public class QueryBuilderUtilsTest {
   }
 
   @Parameter(value = 0)
-  public QueryExpression<QBlogPost> searchExpression;
+  public QueryExpression<QBlogpost> searchExpression;
 
   @Parameter(value = 1)
   public List<QueryBuilder> expectation;

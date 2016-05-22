@@ -11,26 +11,26 @@ package org.lambdamatic.internal.elasticsearch.reactivestreams;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.get.GetRequestBuilder;
-import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.index.IndexRequestBuilder;
+import org.elasticsearch.action.index.IndexResponse;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
 /**
  * A <a href= "https://github.com/reactive-streams/reactive-streams-jvm/blob/v1.0.0/README.md">
- * Reactive Streams</a> {@link Subscription} for a <code>Get</code> operation.
+ * Reactive Streams</a> {@link Subscription} for an <code>Index</code> operation.
  */
-public class GetSubscription implements Subscription {
+public class IndexSubscription implements Subscription {
 
   /**
    * the associated {@link Subscriber}.
    */
-  final Subscriber<? super GetResponse> subscriber;
+  final Subscriber<? super IndexResponse> subscriber;
 
   /**
-   * The {@link GetRequestBuilder} to perform the <code>Get</code> operation.
+   * The {@link IndexRequestBuilder} to perform the <code>Index</code> operation.
    */
-  private final GetRequestBuilder requestBuilder;
+  private final IndexRequestBuilder requestBuilder;
 
   /** A flag to indicate if the operation was cancelled. */
   private AtomicBoolean cancelled = new AtomicBoolean(false);
@@ -39,10 +39,10 @@ public class GetSubscription implements Subscription {
    * Constructor.
    * 
    * @param subscriber the {@link Subscriber} for this {@link Subscription}.
-   * @param requestBuilder the {@link GetRequestBuilder} to perform the <code>Get</code> operation.
+   * @param requestBuilder the {@link IndexRequestBuilder} to perform the <code>Index</code> operation.
    */
-  public GetSubscription(final Subscriber<? super GetResponse> subscriber,
-      final GetRequestBuilder requestBuilder) {
+  public IndexSubscription(final Subscriber<? super IndexResponse> subscriber,
+      final IndexRequestBuilder requestBuilder) {
     this.subscriber = subscriber;
     this.requestBuilder = requestBuilder;
   }
@@ -51,17 +51,17 @@ public class GetSubscription implements Subscription {
   public void request(final long n) {
     if (!this.cancelled.get()) {
       this.requestBuilder
-          .execute(new ActionListener<GetResponse>() {
+          .execute(new ActionListener<IndexResponse>() {
 
             @Override
-            public void onResponse(final GetResponse response) {
-              GetSubscription.this.subscriber.onNext(response);
-              GetSubscription.this.subscriber.onComplete();
+            public void onResponse(final IndexResponse response) {
+              IndexSubscription.this.subscriber.onNext(response);
+              IndexSubscription.this.subscriber.onComplete();
             }
 
             @Override
             public void onFailure(Throwable e) {
-              GetSubscription.this.subscriber.onError(e);
+              IndexSubscription.this.subscriber.onError(e);
             }
           });
     }

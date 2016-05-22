@@ -12,8 +12,6 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.assertj.core.api.Assertions;
-import org.elasticsearch.action.admin.indices.mapping.get.GetFieldMappingsResponse;
-import org.elasticsearch.action.admin.indices.mapping.get.GetFieldMappingsResponse.FieldMappingMetaData;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.client.Requests;
 import org.elasticsearch.test.ESSingleNodeTestCase;
@@ -22,10 +20,10 @@ import org.lambdamatic.elasticsearch.annotations.Document;
 import org.lambdamatic.elasticsearch.testutils.MappingAssertions;
 import org.lambdamatic.internal.elasticsearch.IndexMappingValidator;
 import org.lambdamatic.internal.elasticsearch.IndexValidationStatus;
-import org.lambdamatic.internal.elasticsearch.MappingUtils;
+import org.lambdamatic.internal.elasticsearch.codec.DocumentCodec;
 
-import com.sample.blog.BlogPost;
-import com.sample.blog.BlogPosts;
+import com.sample.blog.Blogpost;
+import com.sample.blog.Blogposts;
 
 /**
  * Testing the {@link IndexMappingValidator}.
@@ -35,9 +33,9 @@ public class IndexMappingValidatorTest extends ESSingleNodeTestCase {
   @Test
   public void shouldCreateIndex() throws IOException {
     // given
-    client().admin().indices().delete(
-        Requests.deleteIndexRequest(BlogPost.class.getAnnotation(Document.class).index()));
-    final BlogPosts blogPosts = new BlogPosts(client());
+    client().admin().indices()
+        .delete(Requests.deleteIndexRequest(Blogpost.class.getAnnotation(Document.class).index()));
+    final Blogposts blogPosts = new Blogposts(client());
     // when verify index, with array and list fields
     final IndexValidationStatus status = blogPosts.verifyIndex();
     // then
@@ -51,10 +49,22 @@ public class IndexMappingValidatorTest extends ESSingleNodeTestCase {
   }
 
   @Test
-  public void shouldLocateIdFieldInDomainType() {
+  public void shouldBuildMapping() {
+    // given
     // when
-    final String idFieldName = MappingUtils.getIdFieldName(BlogPost.class);
+    final Map<String, Object> classMapping =
+        IndexMappingValidator.getElacticsearchMapping(Blogpost.class);
     // then
-    Assertions.assertThat(idFieldName).isEqualTo("id");
+    Assertions.assertThat(classMapping.get("properties")).isInstanceOf(Map.class);
+    final Map<String, Object> blogPostMappingProperties =
+        (Map<String, Object>) classMapping.get("properties");
+    Assertions.assertThat(blogPostMappingProperties.get("comments")).isInstanceOf(Map.class);
+    final Map<String, Object> commentsMapping =
+        (Map<String, Object>) blogPostMappingProperties.get("comments");
+    Assertions.assertThat(commentsMapping.get("type")).isEqualTo("object");
+    Assertions.assertThat(commentsMapping.get("properties")).isInstanceOf(Map.class);
+    final Map<String, Object> commentsMappingProperties =
+        (Map<String, Object>) commentsMapping.get("properties");
   }
+
 }

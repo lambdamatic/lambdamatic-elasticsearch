@@ -16,7 +16,7 @@ import org.lambdamatic.internal.elasticsearch.QueryMetadata;
  * Generated.
  */
 // FIXME: this class MUST be generated
-public class QBlogPost implements QueryMetadata<BlogPost> {
+public class QBlogpost implements QueryMetadata<Blogpost> {
 
   @DocumentField(name = "title")
   public FullTextField title;

@@ -8,13 +8,9 @@
 
 package org.lambdamatic.internal.elasticsearch.reactivestreams;
 
-import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.index.query.QueryBuilder;
 import org.lambdamatic.elasticsearch.querydsl.QueryExpression;
-import org.lambdamatic.internal.elasticsearch.search.QueryBuilderUtils;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.slf4j.Logger;
@@ -22,7 +18,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A <a href= "https://github.com/reactive-streams/reactive-streams-jvm/blob/v1.0.0/README.md">
- * Reactive Streams</a> {@link Publisher} a <code>SearchOperation</code> operation.
+ * Reactive Streams</a> {@link Publisher} for a <code>Search</code> operation.
  * 
  * @param <Q> the Query type associated with the Domain Type to be searched.
  */

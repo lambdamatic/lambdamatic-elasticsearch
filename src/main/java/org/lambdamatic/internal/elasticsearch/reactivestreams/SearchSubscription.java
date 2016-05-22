@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A <a href= "https://github.com/reactive-streams/reactive-streams-jvm/blob/v1.0.0/README.md">
- * Reactive Streams</a> {@link Subscription} a <code>SearchOperation</code> operation.
+ * Reactive Streams</a> {@link Subscription} for a <code>SearchOperation</code> operation.
  * 
  * @param <D> the domain type that is searched
  */

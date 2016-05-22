@@ -24,8 +24,8 @@ import org.lambdamatic.elasticsearch.testutils.DatasetRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.sample.blog.BlogPost;
-import com.sample.blog.BlogPosts;
+import com.sample.blog.Blogpost;
+import com.sample.blog.Blogposts;
 import com.sample.blog.Comment;
 
 /**
@@ -39,15 +39,15 @@ public class SearchOperationTest extends ESSingleNodeTestCase {
   @Rule
   public DatasetRule datasetRule = new DatasetRule(client());
 
-  private BlogPost firstBlogPost() {
-    final BlogPost firstBlogPost = new BlogPost();
+  private Blogpost firstBlogPost() {
+    final Blogpost firstBlogPost = new Blogpost();
     firstBlogPost.setId(1L);
     firstBlogPost.setTitle("First blog post");
     return firstBlogPost;
   }
 
-  private BlogPost secondBlogPost() {
-    final BlogPost secondBlogPost = new BlogPost();
+  private Blogpost secondBlogPost() {
+    final Blogpost secondBlogPost = new Blogpost();
     secondBlogPost.setId(2L);
     secondBlogPost.setTitle("Second blog post");
     secondBlogPost.setComments(
@@ -59,9 +59,9 @@ public class SearchOperationTest extends ESSingleNodeTestCase {
   @Dataset(settings = "settings.json", documents = "blogposts.json")
   public void filterSingleDocumentByTitle() throws IOException, InterruptedException {
     // given
-    final BlogPosts blogPosts = new BlogPosts(client());
+    final Blogposts blogPosts = new Blogposts(client());
     // when
-    final List<BlogPost> result =
+    final List<Blogpost> result =
         blogPosts.filter(p -> p.title.fuzzyMatches("post")).collect(Collectors.toList());
     // then
     Assertions.assertThat(result.size()).isEqualTo(2);
@@ -72,9 +72,9 @@ public class SearchOperationTest extends ESSingleNodeTestCase {
   @Dataset(settings = "settings.json", documents = "blogposts.json")
   public void shouldMatchSingleDocumentByComment() throws IOException, InterruptedException {
     // given
-    final BlogPosts blogPosts = new BlogPosts(client());
+    final Blogposts blogPosts = new Blogposts(client());
     // when
-    final List<BlogPost> result =
+    final List<Blogpost> result =
         blogPosts.shouldMatch(p -> p.comments.comment.matches("nice")).collect(Collectors.toList());
     // then
     Assertions.assertThat(result.size()).isEqualTo(1);
@@ -85,9 +85,9 @@ public class SearchOperationTest extends ESSingleNodeTestCase {
   @Dataset(settings = "settings.json", documents = "blogposts.json")
   public void mustMatchSingleDocumentByComment() throws IOException, InterruptedException {
     // given
-    final BlogPosts blogPosts = new BlogPosts(client());
+    final Blogposts blogPosts = new Blogposts(client());
     // when
-    final List<BlogPost> result =
+    final List<Blogpost> result =
         blogPosts.mustMatch(p -> p.comments.comment.matches("nice")).collect(Collectors.toList());
     // then
     Assertions.assertThat(result.size()).isEqualTo(1);
@@ -98,9 +98,9 @@ public class SearchOperationTest extends ESSingleNodeTestCase {
   @Dataset(settings = "settings.json", documents = "blogposts.json")
   public void filterSingleDocumentByComment() throws IOException, InterruptedException {
     // given
-    final BlogPosts blogPosts = new BlogPosts(client());
+    final Blogposts blogPosts = new Blogposts(client());
     // when
-    final List<BlogPost> result =
+    final List<Blogpost> result =
         blogPosts.filter(p -> p.comments.comment.matches("nice")).collect(Collectors.toList());
     // then
     Assertions.assertThat(result.size()).isEqualTo(1);
@@ -111,9 +111,9 @@ public class SearchOperationTest extends ESSingleNodeTestCase {
   @Dataset(settings = "settings.json", documents = "blogposts.json")
   public void queryAndFilterSingleDocument() throws IOException, InterruptedException {
     // given
-    final BlogPosts blogPosts = new BlogPosts(client());
+    final Blogposts blogPosts = new Blogposts(client());
     // when
-    final List<BlogPost> result = blogPosts.shouldMatch(p -> p.title.fuzzyMatches("second")) 
+    final List<Blogpost> result = blogPosts.shouldMatch(p -> p.title.fuzzyMatches("second")) 
         .filter(p -> p.comments.comment.matches("nice")).collect(Collectors.toList());
     // then
     Assertions.assertThat(result.size()).isEqualTo(1);
@@ -124,9 +124,9 @@ public class SearchOperationTest extends ESSingleNodeTestCase {
   @Dataset(settings = "settings.json", documents = "blogposts.json")
   public void queryAndFilterAllDocument() throws IOException, InterruptedException {
     // given
-    final BlogPosts blogPosts = new BlogPosts(client());
+    final Blogposts blogPosts = new Blogposts(client());
     // when
-    final List<BlogPost> result = blogPosts
+    final List<Blogpost> result = blogPosts
         //.shouldMatch(p -> p.title.fuzzyMatches("second")) 
         .filter(p -> p.title.matches("post"))
         .collect(Collectors.toList());

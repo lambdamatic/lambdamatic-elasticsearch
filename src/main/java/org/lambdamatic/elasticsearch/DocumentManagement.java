@@ -20,17 +20,21 @@ import java.util.function.Consumer;
 public interface DocumentManagement<D> {
 
   /**
-   * Adds the given document in the index
+   * Adds the given document in the index.
    * 
    * @param document the document to add
-   * @return A <a href=
-   *         "https://github.com/reactive-streams/reactive-streams-jvm/blob/v1.0.0/README.md">
-   *         Reactive Streams</a> {@link Publisher} for the {@link IndexResponse} returned by the
-   *         underlying {@link Client}.
-   * TODO: return a simpler type to handle the response. 
    */
-  //public Publisher<IndexResponse> index(D document);
+  public void index(D document);
 
+  /**
+   * Adds the given document in the index.
+   * 
+   * @param document the document to add to the index
+   * @param onSuccess the handler to call when the operation succeeds
+   * @param onError the handler to call if the operation failed 
+   */
+  public void asyncIndex(D document, Consumer<D> onSuccess, Consumer<Throwable> onError);
+  
   /**
    * The gets the document identified by the given {@code documentId} from the index.
    * 

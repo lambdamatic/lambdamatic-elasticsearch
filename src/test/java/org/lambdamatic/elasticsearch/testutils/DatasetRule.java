@@ -46,8 +46,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * JUnit Rule to load a dataset specified by the {@link Dataset} annotation before a test is
- * executed.
+ * JUnit Rule to clear and index and load a dataset specified by the {@link Dataset} annotation
+ * before a test is executed.
  */
 public class DatasetRule implements MethodRule {
 
@@ -74,7 +74,7 @@ public class DatasetRule implements MethodRule {
     try {
       cleanIndices();
       createIndices(method.getMethod().getAnnotation(Dataset.class));
-      loadDocuments(method.getMethod().getAnnotation(Dataset.class));
+      indexDocuments(method.getMethod().getAnnotation(Dataset.class));
     } catch (IOException e) {
       fail("Failed to load the specified dataset", e);
     } catch (InterruptedException e) {
@@ -154,8 +154,9 @@ public class DatasetRule implements MethodRule {
   }
 
   /**
-   * Loads the documents from the resource specified in the given {@link Dataset#documents()}
-   * attribute.
+   * Indexes the documents from the resource specified in the given {@link Dataset#documents()}
+   * attribute, and waits until all elements have been indexed (ie, index size == number of
+   * documents).
    * 
    * @param dataset the {@link Dataset} specification
    * @throws IOException if an I/O error occurs while closing the {@link InputStream} for the
@@ -163,7 +164,7 @@ public class DatasetRule implements MethodRule {
    * @throws InterruptedException may occur while thread is sleeping, to give time to Elasticsearch
    *         to actually index the data that was sent.
    */
-  private void loadDocuments(final Dataset dataset) throws IOException, InterruptedException {
+  private void indexDocuments(final Dataset dataset) throws IOException, InterruptedException {
     if (dataset == null || dataset.documents() == null || dataset.documents().isEmpty()) {
       LOGGER.warn(
           "Skipping dataset loading - Test method has no @Dataset annotation or @Dataset#documents is null or empty.");
@@ -204,23 +205,14 @@ public class DatasetRule implements MethodRule {
       // (should be 1s or less)
       if (!documents.isEmpty()) {
         long docCount = 0L;
-        while ((docCount = countDocs()) < documents.size()) {
-          Thread.sleep(TimeUnit.SECONDS.toMillis(1));
+        while ((docCount = ESUtils.countDocs(client)) < documents.size()) {
+          Thread.sleep(TimeUnit.MILLISECONDS.toMillis(100));
         }
       }
     } finally {
       LOGGER.info("Loading dataset done.");
 
     }
-  }
-
-  /**
-   * @return the <strong>current</strong> number of documents in the indices.
-   */
-  private long countDocs() {
-    final ClusterStatsResponse clusterStats =
-        client.admin().cluster().clusterStats(new ClusterStatsRequest()).actionGet();
-    return clusterStats.getIndicesStats().getDocs().getCount();
   }
 
   /**

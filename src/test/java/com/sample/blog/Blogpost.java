@@ -8,6 +8,7 @@
 
 package com.sample.blog;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -19,7 +20,7 @@ import org.lambdamatic.elasticsearch.annotations.DocumentId;
  * A blog post.
  */
 @Document(index = "blog_index", type = "blogpost")
-public class BlogPost {
+public class Blogpost {
   
   @DocumentId
   private Long id;
@@ -103,7 +104,11 @@ public class BlogPost {
    * @param comments the comments to set.
    */
   public void setComments(List<Comment> comments) {
-    this.comments = comments;
+    if(this.comments == null) {
+      this.comments = new ArrayList<>();
+    }
+    this.comments.clear();
+    this.comments.addAll(comments);
   }
 
   @Override
@@ -129,7 +134,7 @@ public class BlogPost {
     if (getClass() != obj.getClass()) {
       return false;
     }
-    BlogPost other = (BlogPost) obj;
+    Blogpost other = (Blogpost) obj;
     if (body == null) {
       if (other.body != null) {
         return false;

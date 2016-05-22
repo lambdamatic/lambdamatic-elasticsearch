@@ -9,6 +9,7 @@
 package org.lambdamatic.internal.elasticsearch;
 
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -17,6 +18,7 @@ import java.util.stream.Collector;
 import java.util.stream.StreamSupport;
 
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
@@ -25,13 +27,15 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.lambdamatic.elasticsearch.ElasticsearchDomainTypeManager;
 import org.lambdamatic.elasticsearch.annotations.Document;
+import org.lambdamatic.elasticsearch.exceptions.DomainTypeException;
 import org.lambdamatic.elasticsearch.querydsl.Collectable;
 import org.lambdamatic.elasticsearch.querydsl.FilterContext;
 import org.lambdamatic.elasticsearch.querydsl.MustMatchContext;
 import org.lambdamatic.elasticsearch.querydsl.QueryExpression;
+import org.lambdamatic.internal.elasticsearch.codec.DocumentCodec;
 import org.lambdamatic.internal.elasticsearch.reactivestreams.GetPublisher;
+import org.lambdamatic.internal.elasticsearch.reactivestreams.IndexPublisher;
 import org.lambdamatic.internal.elasticsearch.search.QueryBuilderUtils;
-import org.lambdamatic.internal.elasticsearch.search.streams.Converter;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
@@ -65,7 +69,11 @@ public abstract class BaseElasticsearchDomainTypeManagerImpl<D, Q extends QueryM
   /** Value of the <code>_type</code> field to categorize the document in the Elasticsearch. */
   private final String type;
 
+  /** The mapping validator. */
   private final IndexMappingValidator mappingValidator;
+
+  /** The document codec. */
+  private final DocumentCodec<D> documentCodec;
 
   /** The expression to use to <strong>match (SHOULD)</strong> documents. */
   private QueryExpression<Q> shouldMatchExpression;
@@ -81,8 +89,11 @@ public abstract class BaseElasticsearchDomainTypeManagerImpl<D, Q extends QueryM
    * 
    * @param client The underlying {@link Client} to connect to the Elasticsearch cluster
    * @param domainType The domain type associated with this index
+   * @throws DomainTypeException if something went wrong during the introspection of the given
+   *         domain type
    */
-  public BaseElasticsearchDomainTypeManagerImpl(final Client client, final Class<D> domainType) {
+  public BaseElasticsearchDomainTypeManagerImpl(final Client client, final Class<D> domainType)
+      throws DomainTypeException {
     this.client = client;
     this.domainType = domainType;
     final Document documentAnnotation = domainType.getAnnotation(Document.class);
@@ -94,6 +105,8 @@ public abstract class BaseElasticsearchDomainTypeManagerImpl<D, Q extends QueryM
     this.type = documentAnnotation.type();
     this.mappingValidator =
         new IndexMappingValidator(this.client, this.domainType, this.indexName, this.type);
+    this.documentCodec = new DocumentCodec<>(this.domainType);
+
   }
 
   /**
@@ -129,17 +142,24 @@ public abstract class BaseElasticsearchDomainTypeManagerImpl<D, Q extends QueryM
   }
 
   @Override
-  public D get(final String documentId) {
-    final GetResponse getResponse =
-        this.client.prepareGet(this.indexName, this.type, documentId).get();
-    return Converter.toDomainType(this.domainType, getResponse.getId(), getResponse.getSource());
+  public void index(final D document) {
+    final Map<String, Object> sourcMap = this.documentCodec.toSourceMap(document);
+    final String documentId = this.documentCodec.getDomainObjectId(document);
+    if (documentId != null) {
+      client.prepareIndex(indexName, type, documentId).setSource(sourcMap).get();
+    } else {
+      final IndexResponse indexResponse =
+          client.prepareIndex(indexName, type).setSource(sourcMap).get();
+      this.documentCodec.setDomainObjectId(document, indexResponse.getId());
+    }
   }
 
   @Override
-  public void asyncGet(final String documentId, Consumer<D> onSuccess,
-      Consumer<Throwable> onError) {
-    final GetPublisher publisher = new GetPublisher(this.client, this.indexName, this.type, documentId);
-    publisher.subscribe(new Subscriber<GetResponse>() {
+  public void asyncIndex(final D document, final Consumer<D> onSuccess,
+      final Consumer<Throwable> onError) {
+    final IndexPublisher<D> publisher =
+        new IndexPublisher<>(this.client, this.indexName, this.type, document);
+    publisher.subscribe(new Subscriber<IndexResponse>() {
 
       @Override
       public void onSubscribe(final Subscription s) {
@@ -147,8 +167,7 @@ public abstract class BaseElasticsearchDomainTypeManagerImpl<D, Q extends QueryM
       }
 
       @Override
-      public void onNext(final GetResponse t) {
-        final D document = Converter.toDomainType(domainType, t.getId(), t.getSource());
+      public void onNext(final IndexResponse t) {
         onSuccess.accept(document);
       }
 
@@ -161,7 +180,45 @@ public abstract class BaseElasticsearchDomainTypeManagerImpl<D, Q extends QueryM
       public void onComplete() {
         // do nothing, we are only collecting a single element.
       }
-      });
+    });
+
+  }
+
+  @Override
+  public D get(final String documentId) {
+    final GetResponse getResponse =
+        this.client.prepareGet(this.indexName, this.type, documentId).get();
+    return this.documentCodec.toDomainType(getResponse.getId(), getResponse.getSource());
+  }
+
+  @Override
+  public void asyncGet(final String documentId, Consumer<D> onSuccess,
+      Consumer<Throwable> onError) {
+    final GetPublisher publisher =
+        new GetPublisher(this.client, this.indexName, this.type, documentId);
+    publisher.subscribe(new Subscriber<GetResponse>() {
+
+      @Override
+      public void onSubscribe(final Subscription s) {
+        s.request(1);
+      }
+
+      @Override
+      public void onNext(final GetResponse t) {
+        final D document = documentCodec.toDomainType(t.getId(), t.getSource());
+        onSuccess.accept(document);
+      }
+
+      @Override
+      public void onError(Throwable t) {
+        onError.accept(t);
+      }
+
+      @Override
+      public void onComplete() {
+        // do nothing, we are only collecting a single element.
+      }
+    });
   }
 
   @Override
@@ -208,8 +265,8 @@ public abstract class BaseElasticsearchDomainTypeManagerImpl<D, Q extends QueryM
     final Iterator<SearchHit> iterator = response.getHits().iterator();
     final Spliterator<SearchHit> spliterator =
         Spliterators.spliteratorUnknownSize(iterator, Spliterator.IMMUTABLE);
-    return StreamSupport.stream(spliterator, false).map(searchHit -> Converter
-        .toDomainType(this.domainType, searchHit.getId(), searchHit.sourceAsMap()))
+    return StreamSupport.stream(spliterator, false).map(
+        searchHit -> this.documentCodec.toDomainType(searchHit.getId(), searchHit.sourceAsMap()))
         .collect(collector);
   }
 

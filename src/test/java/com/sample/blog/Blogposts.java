@@ -15,12 +15,12 @@ import org.elasticsearch.client.Client;
 import org.lambdamatic.internal.elasticsearch.BaseElasticsearchDomainTypeManagerImpl;
 
 /**
- * Manager for the {@link BlogPost} entities stored in Elasticsearch.
+ * Manager for the {@link Blogpost} entities stored in Elasticsearch.
  */
-public class BlogPosts extends BaseElasticsearchDomainTypeManagerImpl<BlogPost, QBlogPost> {
+public class Blogposts extends BaseElasticsearchDomainTypeManagerImpl<Blogpost, QBlogpost> {
 
-  public BlogPosts(final Client client) {
-    super(client, BlogPost.class);
+  public Blogposts(final Client client) {
+    super(client, Blogpost.class);
   }
   
 }

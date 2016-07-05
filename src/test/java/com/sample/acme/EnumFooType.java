@@ -9,20 +9,12 @@
  *     Red Hat - Initial Contribution
  *******************************************************************************/
 
-package com.sample.blog;
-
-import org.elasticsearch.client.Client;
-import org.lambdamatic.internal.elasticsearch.BaseElasticsearchDomainTypeManagerImpl;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
+package com.sample.acme;
 
 /**
- * Manager for the {@link Blogpost} documents stored in Elasticsearch.
+ * An enum, to verify serialization/deserialization.
  */
-public class Blogposts extends BaseElasticsearchDomainTypeManagerImpl<Blogpost, QBlogpost> {
+public enum EnumFooType {
 
-  public Blogposts(final Client client, final ObjectMapper objectMapper) {
-    super(client, objectMapper, Blogpost.class);
-  }
-  
+  FOO, BAR, BAZ;
 }

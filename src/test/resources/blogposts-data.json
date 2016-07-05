@@ -3,7 +3,7 @@
     {
       "indices":[
         {
-          "indexName":"blog_index",
+          "indexName":"blogpost_index",
           "indexType":"blogpost",
           "indexId":"1"
         }
@@ -15,7 +15,7 @@
     {
       "indices":[
         {
-          "indexName":"blog_index",
+          "indexName":"blogpost_index",
           "indexType":"blogpost",
           "indexId":"2"
         }

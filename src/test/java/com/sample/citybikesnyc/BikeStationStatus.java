@@ -3,6 +3,9 @@
  */
 package com.sample.citybikesnyc;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 /**
  * The {@link BikeStation} status.
  * 
@@ -26,6 +29,7 @@ public enum BikeStationStatus {
    * @param key the key to process
    * @return the corresponding {@link BikeStationStatus}
    */
+  @JsonCreator
   public static BikeStationStatus valueOf(final int key) {
     switch (key) {
       case 1:
@@ -37,6 +41,11 @@ public enum BikeStationStatus {
       default:
         return UNKNOWN;
     }
+  }
+  
+  @JsonValue
+  public int getKey() {
+    return key;
   }
 
 }

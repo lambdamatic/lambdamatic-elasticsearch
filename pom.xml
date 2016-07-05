@@ -47,16 +47,20 @@
 		<maven-surefire-plugin.version>2.18.1</maven-surefire-plugin.version>
 		<lambdamatic-analyzer.version>0.2.0-SNAPSHOT</lambdamatic-analyzer.version>
 		<elasticsearch.version>2.3.1</elasticsearch.version>
+		<spatial4j.version>0.4.1</spatial4j.version>
+		<jts.version>1.13</jts.version>
 		<lucene.version>5.5.0</lucene.version>
 		<commons-io.version>2.4</commons-io.version>
 		<mustachejava.version>0.9.1</mustachejava.version>
-		<jackson.version>2.6.3</jackson.version>
+		<jackson.version>2.6.2</jackson.version>
 		<junit.version>4.12</junit.version>
 		<assertj-core.version>3.2.0</assertj-core.version>
 		<slf4j-api.version>1.7.5</slf4j-api.version>
 		<logback-classic.version>1.0.13</logback-classic.version>
 		<json-api.version>1.0.4</json-api.version>
 		<reactive-streams.version>1.0.0</reactive-streams.version>
+		<reflections.version>0.9.10</reflections.version>
+		<jsonassert.version>1.3.0</jsonassert.version>
 	</properties>
 
 	<dependencies>
@@ -76,6 +80,23 @@
 			<version>${elasticsearch.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>com.spatial4j</groupId>
+			<artifactId>spatial4j</artifactId>
+			<version>${spatial4j.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.vividsolutions</groupId>
+			<artifactId>jts</artifactId>
+			<version>${jts.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>xerces</groupId>
+					<artifactId>xercesImpl</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
 			<groupId>com.github.spullara.mustache.java</groupId>
 			<artifactId>compiler</artifactId>
 			<version>${mustachejava.version}</version>
@@ -90,16 +111,26 @@
 			<artifactId>commons-io</artifactId>
 			<version>${commons-io.version}</version>
 		</dependency>
-		<!-- <dependency>
+		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
+			<artifactId>jackson-core</artifactId>
 			<version>${jackson.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jdk8</artifactId>
 			<version>${jackson.version}</version>
-		</dependency> -->
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jsr310</artifactId>
+			<version>${jackson.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.reflections</groupId>
+			<artifactId>reflections</artifactId>
+			<version>${reflections.version}</version>
+		</dependency>
 
 		<!-- Testing dependencies -->
 		<dependency>
@@ -144,7 +175,12 @@
 			<version>${json-api.version}</version>
 			<scope>test</scope>
 		</dependency>
-
+		<dependency>
+			<groupId>org.skyscreamer</groupId>
+			<artifactId>jsonassert</artifactId>
+			<version>${jsonassert.version}</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 

@@ -12,14 +12,17 @@
 package org.lambdamatic.elasticsearch.querydsl;
 
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 /**
- * 
+ * Interface to iterate other elements of a {@link Stream}.
+ * @param <T> the type of element
  */
 public interface Iterable<T> {
 
   /**
    * Performs an action for each search result of this stream.
+   * @param action the action to apply on each element
    *
    */
   void forEach(Consumer<? super T> action);

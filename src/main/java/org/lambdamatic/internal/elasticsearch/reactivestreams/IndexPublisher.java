@@ -38,17 +38,24 @@ public class IndexPublisher<D> implements Publisher<IndexResponse> {
   private final D document;
 
   /**
+   * The {@link DocumentCodec} to serialize the given document.
+   */
+  private final DocumentCodec<D> documentCodec;
+  
+  /**
    * Constructor.
    * 
    * @param client the Elasticsearch {@link Client}
+   * @param documentCodec the {@link DocumentCodec} to serialize the given document
    * @param indexName the name of the index in which the <code>Index</code> operation will be
-   *        performed.
-   * @param type the type of document to Index.
-   * @param document the document to Index.
+   *        performed
+   * @param type the type of document to Index
+   * @param document the document to Index
    */
-  public IndexPublisher(final Client client, final String indexName, final String type,
-      final D document) {
+  public IndexPublisher(final Client client, final DocumentCodec<D> documentCodec,
+      final String indexName, final String type, final D document) {
     this.client = client;
+    this.documentCodec = documentCodec;
     this.indexName = indexName;
     this.type = type;
     this.document = document;
@@ -56,11 +63,10 @@ public class IndexPublisher<D> implements Publisher<IndexResponse> {
 
   @Override
   public void subscribe(final Subscriber<? super IndexResponse> subscriber) {
-    DocumentCodec<D> documentCodec = new DocumentCodec<>((Class<D>) document.getClass());
-    @SuppressWarnings("unchecked")
     final String documentId = documentCodec.getDomainObjectId(this.document);
     final IndexRequestBuilder requestBuilder =
-        this.client.prepareIndex(this.indexName, this.type, documentId).setSource(documentCodec.toSourceMap(document));
+        this.client.prepareIndex(this.indexName, this.type, documentId)
+            .setSource(documentCodec.encode(document));
     final IndexSubscription subscription = new IndexSubscription(subscriber, requestBuilder);
     subscriber.onSubscribe(subscription);
   }

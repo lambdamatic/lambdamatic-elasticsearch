@@ -19,9 +19,9 @@ import org.lambdamatic.elasticsearch.annotations.DocumentId;
 /**
  * A blog post.
  */
-@Document(index = "blog_index", type = "blogpost")
+@Document(index = "blogpost_index", type = "blogpost")
 public class Blogpost {
-  
+
   @DocumentId
   private Long id;
 
@@ -36,7 +36,7 @@ public class Blogpost {
 
   @DocumentField
   private List<Comment> comments;
-  
+
   /**
    * @return the id.
    */
@@ -104,7 +104,7 @@ public class Blogpost {
    * @param comments the comments to set.
    */
   public void setComments(List<Comment> comments) {
-    if(this.comments == null) {
+    if (this.comments == null) {
       this.comments = new ArrayList<>();
     }
     this.comments.clear();
@@ -193,7 +193,7 @@ public class Blogpost {
     builder.append("]");
     return builder.toString();
   }
-  
 
-  
+
+
 }

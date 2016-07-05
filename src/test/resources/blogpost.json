@@ -1,0 +1,19 @@
+{
+	"title": "blog post",
+	"body": "Lorem ipsum...",
+	"tags":["foo", "bar"],
+	"comments": [
+		{
+			"authorName": "Xavier",
+			"comment": "Nice work!",
+			"stars": 5,
+			"date": "2016-04-01"
+		},
+		{
+			"authorName": "Xavier",
+			"comment": "this looks good",
+			"stars": 5,
+			"date": "2016-07-03"
+		}
+	]
+}

@@ -36,7 +36,6 @@ public class Comment {
    */
   public Comment() {
   }
-
   
   /**
    * Full constructor.

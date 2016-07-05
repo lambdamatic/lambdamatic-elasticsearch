@@ -204,10 +204,7 @@ public class DatasetRule implements MethodRule {
       // give Elasticsearch a bit of time to actually index all the data that was sent
       // (should be 1s or less)
       if (!documents.isEmpty()) {
-        long docCount = 0L;
-        while ((docCount = ESUtils.countDocs(client)) < documents.size()) {
-          Thread.sleep(TimeUnit.MILLISECONDS.toMillis(100));
-        }
+        ESAssertions.assertThat(client).hasClusterSize(documents.size());
       }
     } finally {
       LOGGER.info("Loading dataset done.");

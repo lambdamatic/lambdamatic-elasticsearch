@@ -17,7 +17,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Defines the Elasticsearch type used to index the associated document. 
+ * Annotation to define domain types that can be indexed and stored in Elasticsearch.
+ * 
+ * <p>
+ * Such domain types <strong>MUST HAVE</strong> an empty constructor to allow for deserialization.
+ * </p>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

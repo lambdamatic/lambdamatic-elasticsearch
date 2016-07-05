@@ -16,7 +16,7 @@ import java.lang.annotation.Target;
 import org.lambdamatic.elasticsearch.types.Location;
 
 /**
- * Defines the {@code latitude} field in an Elasticsearch {@code Geo_point}. The Java type used in
+ * Defines the {@code longitude} field in an Elasticsearch {@code Geo_point}. The Java type used in
  * the domain model must have two fields, one annotated with {@link Longitude} and the other one
  * {@link Latitude} to be a valid {@code Geo_point}.
  * 

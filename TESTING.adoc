@@ -17,7 +17,7 @@ The file format is the following:
    "documents":[
       {
        "index":{
-          "indexName":"blog_index",
+          "indexName":"blogpost_index",
           "indexType":"blogpost",
           "indexId":"1"
         },

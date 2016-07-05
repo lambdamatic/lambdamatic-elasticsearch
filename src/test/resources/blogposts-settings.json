@@ -1,5 +1,5 @@
 {
-  "blog_index" : {
+  "blogpost_index" : {
 	  "settings":{
 	    "analysis":{
 	      "analyzer":{

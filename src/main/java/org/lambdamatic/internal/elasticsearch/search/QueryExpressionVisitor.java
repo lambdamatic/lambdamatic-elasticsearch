@@ -4,6 +4,7 @@ package org.lambdamatic.internal.elasticsearch.search;
 import java.lang.reflect.Method;
 
 import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.common.geo.builders.ShapeBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.BoostableQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -17,6 +18,7 @@ import org.lambdamatic.analyzer.ast.node.MethodInvocation;
 import org.lambdamatic.elasticsearch.annotations.DocumentField;
 import org.lambdamatic.elasticsearch.exceptions.ConversionException;
 import org.lambdamatic.elasticsearch.querydsl.QueryExpression;
+import org.lambdamatic.elasticsearch.types.Location;
 import org.lambdamatic.internal.elasticsearch.QueryClauseType;
 import org.lambdamatic.internal.elasticsearch.QueryClauseType.EnumQueryClauseType;
 import org.lambdamatic.internal.elasticsearch.QueryOperator;
@@ -72,6 +74,13 @@ public class QueryExpressionVisitor extends ExpressionVisitor {
         case MATCHES:
           this.queryBuilder = QueryBuilders.matchQuery(fieldName, value);
           break;
+        case GEO_WITHIN_RECTANGLE:
+          final Location topLeft = (Location) methodInvocation.getArguments().get(0).getValue();
+          final Location bottomRight = (Location) methodInvocation.getArguments().get(1).getValue();
+          this.queryBuilder = QueryBuilders.geoBoundingBoxQuery(fieldName)
+              .topLeft(topLeft.getLatitude(), topLeft.getLongitude())
+              .bottomRight(bottomRight.getLatitude(), bottomRight.getLongitude());
+          break;
         default:
           throw new ConversionException("Unsupported search type: " + searchType);
       }
@@ -82,7 +91,7 @@ public class QueryExpressionVisitor extends ExpressionVisitor {
       final QueryOperator queryOperator = javaMethod.getAnnotation(QueryOperator.class);
       if (queryOperator != null && queryOperator.value() == QueryOperatorType.BOOST) {
         final float boostFactor = (float) methodInvocation.getArguments().get(0).getValue();
-        ((BoostableQueryBuilder<?>)this.queryBuilder).boost(boostFactor);
+        ((BoostableQueryBuilder<?>) this.queryBuilder).boost(boostFactor);
       }
 
     } else {
@@ -107,6 +116,10 @@ public class QueryExpressionVisitor extends ExpressionVisitor {
           sourceType.getField(field.getFieldName()).getAnnotation(DocumentField.class).name();
       if (field.getSource().getExpressionType() == ExpressionType.FIELD_ACCESS) {
         return getDocumentFieldName((FieldAccess) field.getSource()) + "." + fieldName;
+      }
+      if (fieldName == null || fieldName.isEmpty()) {
+        // assume that the Elasticsearch document field has the same name as the domain field
+        return field.getFieldName();
       }
       return fieldName;
     } catch (NoSuchFieldException e) {

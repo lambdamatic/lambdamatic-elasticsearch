@@ -20,7 +20,7 @@ import org.lambdamatic.elasticsearch.annotations.Document;
 import org.lambdamatic.elasticsearch.testutils.MappingAssertions;
 import org.lambdamatic.internal.elasticsearch.IndexMappingValidator;
 import org.lambdamatic.internal.elasticsearch.IndexValidationStatus;
-import org.lambdamatic.internal.elasticsearch.codec.DocumentCodec;
+import org.lambdamatic.internal.elasticsearch.codec.ObjectMapperFactory;
 
 import com.sample.blog.Blogpost;
 import com.sample.blog.Blogposts;
@@ -35,15 +35,15 @@ public class IndexMappingValidatorTest extends ESSingleNodeTestCase {
     // given
     client().admin().indices()
         .delete(Requests.deleteIndexRequest(Blogpost.class.getAnnotation(Document.class).index()));
-    final Blogposts blogPosts = new Blogposts(client());
+    final Blogposts blogPosts = new Blogposts(client(), ObjectMapperFactory.getObjectMapper());
     // when verify index, with array and list fields
     final IndexValidationStatus status = blogPosts.verifyIndex();
     // then
     Assertions.assertThat(status).isEqualTo(IndexValidationStatus.OK);
     final GetMappingsResponse fieldMappings =
-        client().admin().indices().prepareGetMappings("blog_index").addTypes("blogpost").get();
+        client().admin().indices().prepareGetMappings("blogpost_index").addTypes("blogpost").get();
     final Map<String, Object> blogPostMapping =
-        fieldMappings.getMappings().get("blog_index").get("blogpost").get().sourceAsMap();
+        fieldMappings.getMappings().get("blogpost_index").get("blogpost").get().sourceAsMap();
     MappingAssertions.assertThat(blogPostMapping).hasMapping("body", "string")
         .hasMapping("comments.comment", "string");
   }
@@ -63,8 +63,6 @@ public class IndexMappingValidatorTest extends ESSingleNodeTestCase {
         (Map<String, Object>) blogPostMappingProperties.get("comments");
     Assertions.assertThat(commentsMapping.get("type")).isEqualTo("object");
     Assertions.assertThat(commentsMapping.get("properties")).isInstanceOf(Map.class);
-    final Map<String, Object> commentsMappingProperties =
-        (Map<String, Object>) commentsMapping.get("properties");
   }
 
 }

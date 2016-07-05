@@ -7,19 +7,20 @@ import java.util.Date;
 
 import org.lambdamatic.elasticsearch.annotations.Document;
 import org.lambdamatic.elasticsearch.annotations.DocumentField;
+import org.lambdamatic.elasticsearch.annotations.DocumentId;
 import org.lambdamatic.elasticsearch.types.Location;
 
 /**
  * A Bike Station document.
  * 
  */
-@Document(index = "citybikesnyc", type = "bikestations")
+@Document(index = "bikestation_index", type = "bikestation")
 public class BikeStation {
 
-  @DocumentField
+  @DocumentId
   private String id;
 
-  @DocumentField
+  @DocumentField(name = "station_name")
   private String stationName;
 
   @DocumentField
@@ -42,31 +43,6 @@ public class BikeStation {
 
   @DocumentField
   private Date executionTime;
-
-  /**
-   * Empty Constructor.
-   */
-  public BikeStation() {
-
-  }
-
-  /**
-   * Full constructor
-   */
-  public BikeStation(final String id, final String stationName, final int availableDocks,
-      final int totalDocks, final int availableBikes, final Double latitude, final Double longitude,
-      final BikeStationStatus status, final boolean testStation, final Date executionTime) {
-    super();
-    this.id = id;
-    this.stationName = stationName;
-    this.availableDocks = availableDocks;
-    this.totalDocks = totalDocks;
-    this.availableBikes = availableBikes;
-    this.location = new Location(longitude, latitude);
-    this.status = status;
-    this.testStation = testStation;
-    this.executionTime = executionTime;
-  }
 
   public String getId() {
     return id;

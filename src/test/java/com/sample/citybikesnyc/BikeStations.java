@@ -9,7 +9,7 @@
  *     Red Hat - Initial Contribution
  *******************************************************************************/
 
-package com.sample.blog;
+package com.sample.citybikesnyc;
 
 import org.elasticsearch.client.Client;
 import org.lambdamatic.internal.elasticsearch.BaseElasticsearchDomainTypeManagerImpl;
@@ -17,12 +17,12 @@ import org.lambdamatic.internal.elasticsearch.BaseElasticsearchDomainTypeManager
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Manager for the {@link Blogpost} documents stored in Elasticsearch.
+ * Manager for the {@link BikeStation} documents stored in Elasticsearch.
  */
-public class Blogposts extends BaseElasticsearchDomainTypeManagerImpl<Blogpost, QBlogpost> {
+public class BikeStations extends BaseElasticsearchDomainTypeManagerImpl<BikeStation, QBikeStation> {
 
-  public Blogposts(final Client client, final ObjectMapper objectMapper) {
-    super(client, objectMapper, Blogpost.class);
+  public BikeStations(final Client client, final ObjectMapper objectMapper) {
+    super(client, objectMapper, BikeStation.class);
   }
   
 }

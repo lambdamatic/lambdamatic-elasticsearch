@@ -1,0 +1,11 @@
+{
+	"stationName": "Station 1",
+	"availableDocks": 15,
+	"availableBikes": 5,
+	"totalDocks": 20,
+	"status": 1,
+	"location": {
+		"lat": 41.12,
+		"lon": -71.34
+	}
+}

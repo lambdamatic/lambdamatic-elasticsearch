@@ -16,6 +16,7 @@
   <logger name="org.lambdamatic.analyzer" level="TRACE" />
   <logger name="bootstrap" level="DEBUG" />
   <logger name="cluster.metadata" level="DEBUG" />
+  <logger name="org.reflections.Reflections" level="INFO" />
 
   <root level="DEBUG">
     <appender-ref ref="STDOUT" />

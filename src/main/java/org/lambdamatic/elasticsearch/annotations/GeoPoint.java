@@ -6,40 +6,24 @@
  * Contributors: Red Hat - Initial Contribution
  *******************************************************************************/
 
-package org.lambdamatic.internal.elasticsearch;
+package org.lambdamatic.elasticsearch.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import org.lambdamatic.elasticsearch.querydsl.types.FullTextField;
 
 /**
- * Designate the type of search that a method on a {@link FullTextField} provides.
+ * Defines a {@code location} type to map with an Elasticsearch {@code Geo_point}. The annotated
+ * Java type must have two fields, one annotated with {@link Longitute} and the other one
+ * {@link Latitude} to be a valid {@code Geo_point}.
+ * 
+ * @see Latitude
+ * @see Longitude
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface QueryClauseType {
-  
-  /**
-   * The type of query clause.
-   */
-  public enum EnumQueryClauseType {
-    /** Fuzzy search. */
-    FUZZY, 
-    /** Proximity search. */
-    PROXIMITY, 
-    /** Range search. */
-    RANGE, 
-    /** Match search. */
-    MATCHES, 
-    /** Term search. */
-    TERM,
-    /** Geo within rectangle. */
-    GEO_WITHIN_RECTANGLE;
-  }
+@Target(ElementType.TYPE)
+public @interface GeoPoint {
 
-  /** the type of search. */
-  public EnumQueryClauseType value();
 }

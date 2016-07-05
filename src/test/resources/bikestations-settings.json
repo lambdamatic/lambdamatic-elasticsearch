@@ -1,0 +1,33 @@
+{
+  "bikestation_index" : {
+	  "mappings":{
+	    "bikestation":{
+	      "properties":{
+	        "availableBikes":{
+	          "type":"long"
+	        },
+	        "availableDocks":{
+	          "type":"long"
+	        },
+	        "totalDocks":{
+	          "type":"long"
+	        },
+	        "executionTime":{
+	          "type":"date"
+	        },
+	        "location":{
+	          "type":"geo_point"
+	        },
+	        "stationName":{
+	          "type":"string"
+	        },
+	        "status":{
+	          "type":"string",
+	          "index":"not_analyzed"
+	        }
+	      }
+	    }
+	  }
+	}
+}
+  

@@ -9,20 +9,24 @@
  *     Red Hat - Initial Contribution
  *******************************************************************************/
 
-package com.sample.blog;
+package org.lambdamatic.internal.elasticsearch.codec;
 
-import org.elasticsearch.client.Client;
-import org.lambdamatic.internal.elasticsearch.BaseElasticsearchDomainTypeManagerImpl;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
 /**
- * Manager for the {@link Blogpost} documents stored in Elasticsearch.
+ * Marker annotation for all built-in and generated Jackson mixins.
  */
-public class Blogposts extends BaseElasticsearchDomainTypeManagerImpl<Blogpost, QBlogpost> {
-
-  public Blogposts(final Client client, final ObjectMapper objectMapper) {
-    super(client, objectMapper, Blogpost.class);
-  }
+@Retention(RUNTIME)
+@Target(TYPE)
+public @interface Mixin {
   
+  /**
+   * @return the target class on which this mixin applies
+   */
+  public Class<?> target();
+
 }

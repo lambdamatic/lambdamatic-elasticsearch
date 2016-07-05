@@ -20,5 +20,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface DocumentId {
+  
+  /** the reserved name of the 'id' field in the Elasticsearch documents. */
+  public static final String ID_FIELD_NAME = "_id";
 
 }

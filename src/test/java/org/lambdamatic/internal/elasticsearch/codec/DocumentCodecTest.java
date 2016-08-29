@@ -15,18 +15,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.function.Supplier;
 
 import org.apache.commons.io.IOUtils;
 import org.assertj.core.api.Assertions;
 import org.json.JSONException;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.lambdamatic.elasticsearch.types.Location;
 import org.lambdamatic.internal.elasticsearch.MappingException;
+import org.lambdamatic.internal.elasticsearch.codec.DocumentCodec;
+import org.lambdamatic.internal.elasticsearch.codec.ObjectMapperFactory;
 import org.skyscreamer.jsonassert.JSONAssert;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -88,23 +87,23 @@ public class DocumentCodecTest {
     final Blogpost blogpost = new Blogpost();
     blogpost.setId(1L);
     blogpost.setTitle("blog post");
-    blogpost.setBody("Lorem ipsum...");
-    blogpost.setTags(new String[]{"foo", "bar"});
+    blogpost.setContent("Lorem ipsum...");
+    blogpost.setTags(new String[] {"foo", "bar"});
     final Comment firstComment = new Comment("Xavier", "Nice work!", 5, LocalDate.of(2016, 4, 1));
-    final Comment secondComment = new Comment("Xavier", "this looks good", 5, LocalDate.of(2016, 7, 3));
+    final Comment secondComment =
+        new Comment("Xavier", "this looks good", 5, LocalDate.of(2016, 7, 3));
     blogpost.setComments(Arrays.asList(firstComment, secondComment));
     // when
-    final String documentSource =
+    final String actualContent =
         new DocumentCodec<>(Blogpost.class, ObjectMapperFactory.getObjectMapper()).encode(blogpost);
     // then id should not be part of the documentSource, but other fields, yes.
     final String expectedContent = IOUtils
         .toString(BikeStationDeserializer.class.getClassLoader().getResource("blogpost.json"));
-    JSONAssert.assertEquals(expectedContent, documentSource, false);
+    JSONAssert.assertEquals(expectedContent, actualContent, false);
   }
-  
+
   @Test
-  public void shouldDecodeBlogPost()
-      throws JsonParseException, JsonMappingException, IOException {
+  public void shouldDecodeBlogPost() throws JsonParseException, JsonMappingException, IOException {
     // given
     final InputStream content =
         BikeStationDeserializer.class.getClassLoader().getResourceAsStream("blogpost.json");
@@ -114,7 +113,7 @@ public class DocumentCodecTest {
     // then
     assertThat(blogpost.getId()).isNull();
     assertThat(blogpost.getTitle()).isEqualTo("blog post");
-    assertThat(blogpost.getBody()).isEqualTo("Lorem ipsum...");
+    assertThat(blogpost.getContent()).isEqualTo("Lorem ipsum...");
     assertThat(blogpost.getTags()).containsExactly("foo", "bar");
     assertThat(blogpost.getComments()).containsExactly(
         new Comment("Xavier", "Nice work!", 5, LocalDate.of(2016, 04, 01)),
@@ -133,15 +132,15 @@ public class DocumentCodecTest {
     bikeStation.setStatus(BikeStationStatus.IN_SERVICE);
     bikeStation.setLocation(new Location(41.12, -71.34));
     // when
-    final String documentSource =
+    final String actualContent =
         new DocumentCodec<>(BikeStation.class, ObjectMapperFactory.getObjectMapper())
             .encode(bikeStation);
     // then id should not be part of the documentSource, but other fields, yes.
     final String expectedContent = IOUtils
         .toString(BikeStationDeserializer.class.getClassLoader().getResource("bikestation.json"));
-    JSONAssert.assertEquals(expectedContent, documentSource, false);
+    JSONAssert.assertEquals(expectedContent, actualContent, false);
   }
-  
+
   @Test
   public void shouldDecodeBikeStation()
       throws JsonParseException, JsonMappingException, IOException {

@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.Test;
 import org.lambdamatic.elasticsearch.types.Location;
 import org.lambdamatic.elasticsearch.types.LocationMixin;
+import org.lambdamatic.internal.elasticsearch.codec.ObjectMapperFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 

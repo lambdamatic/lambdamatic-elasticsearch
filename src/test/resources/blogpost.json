@@ -1,6 +1,6 @@
 {
 	"title": "blog post",
-	"body": "Lorem ipsum...",
+	"content": "Lorem ipsum...",
 	"tags":["foo", "bar"],
 	"comments": [
 		{

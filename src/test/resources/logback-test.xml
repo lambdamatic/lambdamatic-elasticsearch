@@ -12,11 +12,12 @@
     </encoder>
   </appender>
 
-  <logger name="org.lambdamatic" level="TRACE" />
-  <logger name="org.lambdamatic.analyzer" level="TRACE" />
+  <logger name="org.lambdamatic" level="DEBUG" />
+  <logger name="org.lambdamatic.analyzer" level="INFO" />
+  <logger name="org.lambdamatic.internal.elasticsearch.clientdsl.Client" level="INFO" />
   <logger name="bootstrap" level="DEBUG" />
   <logger name="cluster.metadata" level="DEBUG" />
-  <logger name="org.reflections.Reflections" level="INFO" />
+  <logger name="org.reflections.Reflections" level="WARN" />
 
   <root level="DEBUG">
     <appender-ref ref="STDOUT" />

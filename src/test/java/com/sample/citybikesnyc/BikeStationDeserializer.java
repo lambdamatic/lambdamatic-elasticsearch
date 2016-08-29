@@ -13,6 +13,8 @@ package com.sample.citybikesnyc;
 
 import java.io.IOException;
 
+import javax.annotation.Generated;
+
 import org.lambdamatic.elasticsearch.types.Location;
 
 import com.fasterxml.jackson.core.JsonParser;
@@ -26,7 +28,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * a {@link JsonDeserializer} for the {@link BikeStation} type.
+ * 
  */
+//@Generated ?
 public class BikeStationDeserializer extends StdDeserializer {
 
   public BikeStationDeserializer() {

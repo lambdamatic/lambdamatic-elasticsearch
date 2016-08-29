@@ -56,7 +56,7 @@ public class ObjectMapperFactory {
 
           // TODO: allow for configuration settings to reduce the scope of searching, using package
           // names instead of a classloader
-          .setUrls(ClasspathHelper.forPackage(""))
+          .setUrls(ClasspathHelper.forJavaClassPath())
           // .setUrls(ClasspathHelper.forClassLoader())
           .setScanners(new SubTypesScanner(), new TypeAnnotationsScanner())
           .setExecutorService(availableProcessorsThreadPool));

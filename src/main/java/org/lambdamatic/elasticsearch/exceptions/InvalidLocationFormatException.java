@@ -1,9 +1,9 @@
 package org.lambdamatic.elasticsearch.exceptions;
 
-import org.lambdamatic.elasticsearch.annotations.GeoPoint;
+import org.lambdamatic.elasticsearch.annotations.GeoPointType;
 
 /**
- * {@link RuntimeException} thrown when the type annotated with {@link GeoPoint} does not fulfill
+ * {@link RuntimeException} thrown when the type annotated with {@link GeoPointType} does not fulfill
  * the contract.
  * 
  */

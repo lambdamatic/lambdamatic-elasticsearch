@@ -8,8 +8,13 @@
 
 package com.sample.blog;
 
+import java.time.LocalDate;
+
 import org.lambdamatic.elasticsearch.annotations.DocumentField;
-import org.lambdamatic.elasticsearch.querydsl.types.FullTextField;
+import org.lambdamatic.elasticsearch.annotations.FullText;
+import org.lambdamatic.elasticsearch.annotations.Keyword;
+import org.lambdamatic.elasticsearch.searchdsl.types.FullTextField;
+import org.lambdamatic.elasticsearch.searchdsl.types.KeywordField;
 import org.lambdamatic.internal.elasticsearch.QueryMetadata;
 
 /**
@@ -19,7 +24,20 @@ import org.lambdamatic.internal.elasticsearch.QueryMetadata;
 public class QBlogpost implements QueryMetadata<Blogpost> {
 
   @DocumentField(name = "title")
+  @FullText
   public FullTextField title;
+  
+  @DocumentField(name = "content")
+  @FullText
+  public FullTextField content;
+  
+  @DocumentField(name = "status")
+  @Keyword
+  public KeywordField<BlogpostStatus> status;
+  
+  @DocumentField(name = "publish_date")
+  @Keyword
+  public KeywordField<LocalDate> publishDate;
   
   @DocumentField(name = "comments")
   public QComments comments;
@@ -28,11 +46,9 @@ public class QBlogpost implements QueryMetadata<Blogpost> {
 
     /** any comment. */
     @DocumentField(name = "comment")
-    public CommentField comment;
+    @FullText
+    public FullTextField comment;
     
-    public interface CommentField extends FullTextField {
-      
-    }
   }
 
 }

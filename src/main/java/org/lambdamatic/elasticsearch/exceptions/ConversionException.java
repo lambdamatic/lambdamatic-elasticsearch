@@ -1,8 +1,8 @@
 
 package org.lambdamatic.elasticsearch.exceptions;
 
-import org.apache.lucene.search.Query;
-import org.lambdamatic.elasticsearch.querydsl.QueryExpression;
+import org.lambdamatic.elasticsearch.searchdsl.QueryExpression;
+import org.lambdamatic.internal.elasticsearch.searchdsl.Query;
 
 /**
  * {@link ConversionException} are thrown when an Elasticsearch/Lucene {@link Query} fails to be

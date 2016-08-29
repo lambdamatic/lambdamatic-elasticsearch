@@ -6,9 +6,9 @@
 
 package org.lambdamatic.elasticsearch.types;
 
-import org.lambdamatic.elasticsearch.annotations.GeoPoint;
-import org.lambdamatic.elasticsearch.annotations.Latitude;
-import org.lambdamatic.elasticsearch.annotations.Longitude;
+import org.lambdamatic.elasticsearch.annotations.GeoPointType;
+import org.lambdamatic.elasticsearch.annotations.LatitudeField;
+import org.lambdamatic.elasticsearch.annotations.LongitudeField;
 import org.lambdamatic.elasticsearch.exceptions.InvalidLocationFormatException;
 
 /**
@@ -17,15 +17,15 @@ import org.lambdamatic.elasticsearch.exceptions.InvalidLocationFormatException;
  * @author Xavier Coulon
  *
  */
-@GeoPoint
+@GeoPointType
 public class Location {
 
   /** The latitude value. */
-  @Latitude
+  @LatitudeField
   private double latitude;
 
   /** The longitude value. */
-  @Longitude
+  @LongitudeField
   private double longitude;
 
   /**

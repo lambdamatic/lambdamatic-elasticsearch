@@ -12,6 +12,8 @@ import java.time.LocalDate;
 
 import org.lambdamatic.elasticsearch.annotations.DocumentField;
 import org.lambdamatic.elasticsearch.annotations.EmbeddedDocument;
+import org.lambdamatic.elasticsearch.annotations.FullText;
+import org.lambdamatic.elasticsearch.annotations.Keyword;
 
 /**
  * A blog post comment.
@@ -20,15 +22,19 @@ import org.lambdamatic.elasticsearch.annotations.EmbeddedDocument;
 public class Comment {
 
   @DocumentField
+  @FullText
   private String authorName;
 
   @DocumentField
+  @FullText
   private String comment;
 
   @DocumentField
+  @Keyword
   private int stars;
 
   @DocumentField
+  @Keyword
   private LocalDate date;
 
   /**

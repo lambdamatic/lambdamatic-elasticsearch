@@ -8,6 +8,7 @@
 
 package com.sample.blog;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.lambdamatic.internal.elasticsearch.codec.Mixin;
@@ -24,12 +25,18 @@ public class BlogpostMixin {
   private String title;
 
   @JsonProperty
-  private String body;
+  private String content;
 
   @JsonProperty
   private String[] tags;
 
   @JsonProperty
   private List<Comment> comments;
+
+  @JsonProperty(value = "status")
+  private BlogpostStatus status;
+
+  @JsonProperty(value = "publish_date")
+  private LocalDate publishDate;
 
 }

@@ -11,18 +11,20 @@
 
 package com.sample.blog;
 
-import org.elasticsearch.client.Client;
-import org.lambdamatic.internal.elasticsearch.BaseElasticsearchDomainTypeManagerImpl;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.lambdamatic.internal.elasticsearch.BaseDocumentManagerImpl;
+import org.lambdamatic.internal.elasticsearch.clientdsl.Client;
 
 /**
  * Manager for the {@link Blogpost} documents stored in Elasticsearch.
  */
-public class Blogposts extends BaseElasticsearchDomainTypeManagerImpl<Blogpost, QBlogpost> {
+public class Blogposts extends BaseDocumentManagerImpl<Blogpost, QBlogpost> {
 
-  public Blogposts(final Client client, final ObjectMapper objectMapper) {
-    super(client, objectMapper, Blogpost.class);
-  }
+  public static final String BLOGPOST_INDEX_NAME = "blogposts";
+
+  public static final String BLOGPOST_TYPE = "blogpost";
   
+  public Blogposts(final Client client) {
+    super(client, Blogpost.class);
+  }
+
 }

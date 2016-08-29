@@ -7,7 +7,8 @@ import java.util.Date;
 
 import org.lambdamatic.elasticsearch.annotations.Document;
 import org.lambdamatic.elasticsearch.annotations.DocumentField;
-import org.lambdamatic.elasticsearch.annotations.DocumentId;
+import org.lambdamatic.elasticsearch.annotations.DocumentIdField;
+import org.lambdamatic.elasticsearch.annotations.FullText;
 import org.lambdamatic.elasticsearch.types.Location;
 
 /**
@@ -17,10 +18,11 @@ import org.lambdamatic.elasticsearch.types.Location;
 @Document(index = "bikestation_index", type = "bikestation")
 public class BikeStation {
 
-  @DocumentId
+  @DocumentIdField
   private String id;
 
   @DocumentField(name = "station_name")
+  @FullText
   private String stationName;
 
   @DocumentField

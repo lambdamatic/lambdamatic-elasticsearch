@@ -1,4 +1,8 @@
-sudo: true
+sudo: required
+
+services:
+  - docker
+
 cache:
   directories:
   - $HOME/.m2
@@ -6,10 +10,14 @@ cache:
 language: java
 jdk:
   - oraclejdk8
-# workaround to specify custom Maven options to run the JUnit tests with Elasticsearch
-# see https://github.com/travis-ci/travis-ci/issues/1689
+
+
 before_script:
-  - export MAVEN_SKIP_RC="true"
-  - export MAVEN_OPTS="-ea"
+# see https://www.elastic.co/guide/en/elasticsearch/guide/master/_file_descriptors_and_mmap.html
+# and https://github.com/travis-ci/travis-ci/issues/6534
+#  - sudo sysctl -w vm.max_map_count=262144
+#  - docker run -p 9200:9200 -p 9300:9300 --sysctl vm.max_map_count=262144 --rm --security-opt seccomp=unconfined -e ES_JAVA_OPTS="-Xms1g -Xmx1g" elasticsearch:5.0.0-alpha5 elasticsearch -E node.name=foo
+
 script:
-  - mvn test -B -Dtests.security.manager=false
+  - mvn clean verify
+

@@ -23,9 +23,9 @@ import java.util.stream.Stream;
 
 import org.lambdamatic.elasticsearch.annotations.Document;
 import org.lambdamatic.elasticsearch.annotations.DocumentField;
-import org.lambdamatic.elasticsearch.annotations.DocumentId;
-import org.lambdamatic.elasticsearch.annotations.Latitude;
-import org.lambdamatic.elasticsearch.annotations.Longitude;
+import org.lambdamatic.elasticsearch.annotations.DocumentIdField;
+import org.lambdamatic.elasticsearch.annotations.LatitudeField;
+import org.lambdamatic.elasticsearch.annotations.LongitudeField;
 import org.lambdamatic.elasticsearch.exceptions.CodecException;
 import org.lambdamatic.elasticsearch.exceptions.DomainTypeException;
 
@@ -101,7 +101,7 @@ public class MappingUtils {
 
   /**
    * Finds the name of the Elasticsearch fields corresponding to the domain type fields annotated
-   * with {@link DocumentField} or {@link DocumentId}.
+   * with {@link DocumentField} or {@link DocumentIdField}.
    * 
    * @param domainType the domain type to analyze.
    * @return a {@link Map} containing the the Elasticsearch field name (key) associated with the
@@ -120,18 +120,18 @@ public class MappingUtils {
     // mandatory, single field annotated with @DocumentId if the given type is annotated with @Document
     if (domainType.isAnnotationPresent(Document.class)) {
       final List<Field> documentIdFields = Stream.of(domainType.getDeclaredFields())
-          .filter(domainField -> domainField.isAnnotationPresent(DocumentId.class))
+          .filter(domainField -> domainField.isAnnotationPresent(DocumentIdField.class))
           .collect(Collectors.toList());
       if (documentIdFields.isEmpty()) {
         throw new CodecException("Domain type '" + domainType.getName()
-            + "' is missing a field annotated with @" + DocumentId.class.getName() + "'");
+            + "' is missing a field annotated with @" + DocumentIdField.class.getName() + "'");
       } else if (documentIdFields.size() > 1) {
         throw new CodecException("Domain type '" + domainType.getName()
-            + "' has more than one field annotated with @" + DocumentId.class.getName() + "'");
+            + "' has more than one field annotated with @" + DocumentIdField.class.getName() + "'");
       }
       final PropertyDescriptor propertyDescriptor =
           getPropertyDescriptor(domainTypeBeanInfo, documentIdFields.get(0));
-      mappings.put(DocumentId.ID_FIELD_NAME,
+      mappings.put(DocumentIdField.ID_FIELD_NAME,
           new FieldDescriptor(documentIdFields.get(0), propertyDescriptor));
     }
     // other fields annotated with @DocumentField
@@ -150,7 +150,7 @@ public class MappingUtils {
 
   /**
    * Finds the name of the Elasticsearch fields corresponding to the latitude and longitude fields
-   * annotated with {@link Latitude} or {@link Longitude}.
+   * annotated with {@link LatitudeField} or {@link LongitudeField}.
    * 
    * @param domainType the domain type to analyze.
    * @return a {@link Map} containing the the Elasticsearch field name (key) associated with the
@@ -167,14 +167,14 @@ public class MappingUtils {
     }
     final Map<String, FieldDescriptor> mappings = new HashMap<>();
     Stream.of(domainType.getDeclaredFields())
-        .filter(domainField -> domainField.isAnnotationPresent(Latitude.class)).findFirst()
+        .filter(domainField -> domainField.isAnnotationPresent(LatitudeField.class)).findFirst()
         .ifPresent(latitudeField -> {
           final PropertyDescriptor propertyDescriptor =
               getPropertyDescriptor(domainTypeBeanInfo, latitudeField);
           mappings.put("lat", new FieldDescriptor(latitudeField, propertyDescriptor));
         });
     Stream.of(domainType.getDeclaredFields())
-        .filter(domainField -> domainField.isAnnotationPresent(Longitude.class)).findFirst()
+        .filter(domainField -> domainField.isAnnotationPresent(LongitudeField.class)).findFirst()
         .ifPresent(longitudeField -> {
           final PropertyDescriptor propertyDescriptor =
               getPropertyDescriptor(domainTypeBeanInfo, longitudeField);

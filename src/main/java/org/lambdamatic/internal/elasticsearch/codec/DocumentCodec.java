@@ -20,17 +20,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.elasticsearch.search.SearchHit;
 import org.lambdamatic.elasticsearch.annotations.Document;
-import org.lambdamatic.elasticsearch.annotations.DocumentField;
-import org.lambdamatic.elasticsearch.annotations.DocumentId;
+import org.lambdamatic.elasticsearch.annotations.DocumentIdField;
 import org.lambdamatic.elasticsearch.annotations.EmbeddedDocument;
 import org.lambdamatic.elasticsearch.exceptions.CodecException;
 import org.lambdamatic.elasticsearch.exceptions.DomainTypeException;
-import org.lambdamatic.elasticsearch.utils.Pair;
 import org.lambdamatic.internal.elasticsearch.MappingException;
+import org.lambdamatic.internal.elasticsearch.clientdsl.responses.SearchResponse.SearchHit;
+import org.lambdamatic.internal.elasticsearch.utils.Pair;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -40,6 +40,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @param <T> the type to encode/decode
  */
 public class DocumentCodec<T> {
+
+  /**
+   * The name of the keyword field in the Elasticsearch document that contains the fully qualified
+   * name of the corresponding domain type.
+   */
+  public static final String DOMAIN_TYPE = "_className";
 
   /** The domain type to encode/decode. */
   final Class<T> domainType;
@@ -83,32 +89,36 @@ public class DocumentCodec<T> {
    * </p>
    * 
    * @param domainObject the document to convert
-   * @return the corresponding source map, or <code>null</code> if the given {@code document} was
-   *         <code>null</code>, too.
+   * @return the corresponding JSON document as a {@link String}, or <code>null</code> if the given
+   *         {@code document} was <code>null</code>, too.
    * 
    */
   public String encode(final Object domainObject) {
+    if (domainObject == null) {
+      return null;
+    }
     try {
       return this.objectMapper.writeValueAsString(domainObject);
     } catch (JsonProcessingException e) {
       throw new CodecException("Failed to convert domain object of type '"
           + this.domainType.getName() + "' into a document source", e);
     }
-    
   }
 
   /**
    * Converts the elements contained in the given {@code searchHit} into a Domain instance.
    * 
    * @param documentId the id of the document retrieved in Elasticsearch
-   * @param documentSource the source of the document retrieved in Elasticsearch
+   * @param documentSourceAsMap the source of the document retrieved in Elasticsearch
    * @return the generated instance of DomainType
    * @throws CodecException if the conversion of the given {@code searchHit} into an instance of the
    *         given {@code domainType} failed.
    */
-  public T decode(final String documentId, final String documentSource) {
+  public T decode(final String documentId, final JsonNode documentSourceAsMap) {
     final T domainObject;
     try {
+      //FIXME: this needs to be improved: we should not have to convert the Map back into a String to parse it again !
+      final String documentSource = this.objectMapper.writeValueAsString(documentSourceAsMap);
       domainObject = this.objectMapper.readValue(documentSource, this.domainType);
     } catch (IOException e) {
       throw new CodecException("Failed to convert a document source into a domain object of type '"
@@ -121,14 +131,13 @@ public class DocumentCodec<T> {
 
   /**
    * Gets the {@code documentId} value for the given {@code domainObject} using the getter for the
-   * property annotated with the {@link DocumentField} annotation and having the
-   * {@link DocumentField#id()} flag set to <code>true</code>.
+   * property annotated with the {@link DocumentIdField} annotation.
    * 
    * @param domainObject the instance of DomainType on which to set the {@code id} property
    * @return the {@code documentId} converted as a String, or <code>null</code> if none was found
    * @throws IntrospectionException if introspection of the given DomainType failed.
    */
-  public String getDomainObjectId(final T domainObject) {
+  public String getDomainObjectId(final Object domainObject) {
     final Field idField = getIdField(domainObject.getClass());
     final PropertyDescriptor idPropertyDescriptor = getIdPropertyDescriptor(domainObject, idField);
     try {
@@ -143,8 +152,7 @@ public class DocumentCodec<T> {
 
   /**
    * Sets the given {@code documentId} value to the given {@code domainObject} using the setter for
-   * the property annotated with the {@link DocumentField} annotation and having the
-   * {@link DocumentField#id()} flag set to <code>true</code>.
+   * the property annotated with the {@link DocumentIdField} annotation.
    * 
    * @param domainObject the instance of DomainType on which to set the {@code id} property
    * @param documentId the value of the document id.
@@ -237,27 +245,28 @@ public class DocumentCodec<T> {
    * available.
    * 
    * @param domainType the domain type to analyze
-   * @return the <strong>single</strong> Java field annotated with {@link DocumentId}. If no field
+   * @return the <strong>single</strong> Java field annotated with {@link DocumentIdField}. If no field
    *         matches the criteria or more than one field is matches these criteria, a
    *         {@link MappingException} is thrown.
    */
   public static Field getIdField(final Class<?> domainType) {
-    final List<Pair<Field, DocumentId>> candidateFields = Stream.of(domainType.getDeclaredFields())
-        .map(field -> new Pair<>(field, field.getAnnotation(DocumentId.class)))
+    final List<Pair<Field, DocumentIdField>> candidateFields = Stream.of(domainType.getDeclaredFields())
+        .map(field -> new Pair<>(field, field.getAnnotation(DocumentIdField.class)))
         .filter(pair -> pair.getRight() != null).collect(Collectors.toList());
     if (candidateFields.isEmpty()) {
       throw new MappingException("No field is annotated with @{} in type {}",
-          DocumentId.class.getName(), domainType);
+          DocumentIdField.class.getName(), domainType);
     } else if (candidateFields.size() > 1) {
       final String fieldNames = candidateFields.stream().map(pair -> pair.getLeft().getName())
           .collect(Collectors.joining(", "));
       throw new MappingException("More than one field is annotated with @{} in type {}: {}",
-          DocumentId.class.getName(), domainType, fieldNames);
+          DocumentIdField.class.getName(), domainType, fieldNames);
     }
     return candidateFields.get(0).getLeft();
   }
 
-  private PropertyDescriptor getIdPropertyDescriptor(final T domainObject, final Field idField) {
+  private PropertyDescriptor getIdPropertyDescriptor(final Object domainObject,
+      final Field idField) {
     return Stream.of(this.domainTypeBeanInfo.getPropertyDescriptors())
         .filter(propertyDescriptor -> propertyDescriptor.getName().equals(idField.getName()))
         .findFirst()

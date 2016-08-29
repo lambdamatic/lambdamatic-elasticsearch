@@ -11,18 +11,18 @@
 
 package com.sample.citybikesnyc;
 
-import org.elasticsearch.client.Client;
-import org.lambdamatic.internal.elasticsearch.BaseElasticsearchDomainTypeManagerImpl;
+import org.lambdamatic.internal.elasticsearch.BaseDocumentManagerImpl;
+import org.lambdamatic.internal.elasticsearch.clientdsl.Client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Manager for the {@link BikeStation} documents stored in Elasticsearch.
  */
-public class BikeStations extends BaseElasticsearchDomainTypeManagerImpl<BikeStation, QBikeStation> {
+public class BikeStations extends BaseDocumentManagerImpl<BikeStation, QBikeStation> {
 
-  public BikeStations(final Client client, final ObjectMapper objectMapper) {
-    super(client, objectMapper, BikeStation.class);
+  public BikeStations(final Client client) {
+    super(client, BikeStation.class);
   }
   
 }

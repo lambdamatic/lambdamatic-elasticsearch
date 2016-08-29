@@ -4,8 +4,8 @@
       "indices":[
         {
           "indexName":"bikestation_index",
-          "indexType":"bikestation",
-          "indexId":"1"
+          "type":"bikestation",
+          "id":"1"
         }
       ],
       "data":{
